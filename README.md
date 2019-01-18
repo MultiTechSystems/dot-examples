@@ -3,21 +3,21 @@ Example programs for MultiTech Dot devices demonstrating how to use the Dot devi
 
 ## Instructions for building Dot-Examples
 
-1. Import dot-examples
+1. Import dot-examples  
 $ mbed import http://os.mbed.com/teams/MultiTech/code/Dot-Examples/
 
-2. cd to the Dot-Examples/examples and import the dot library stack
-Choose either the stable or dev library for your dot device
-e.g. to get the latest development library for the xDot
+2. Change directory to the Dot-Examples/examples and import the dot library stack  
+Choose either the stable or dev library for your dot device  
+e.g. to get the latest development library for the xDot  
 $ mbed add http://os.mbed.com/teams/MultiTech/code/libxDot-dev-mbed5/
 
-3. Update mbed-os revision to match that of the dot library you just imported.
+3. Update mbed-os revision to match that of the dot library you just imported.  
 This information can be found in the library's commit history.
-e.g.
-$ cd Dot-Examples/mbed-os
+e.g.  
+$ cd Dot-Examples/mbed-os  
 $ mbed update mbed-os-5.11.1
 
-4. Modify the Dot-Examples/examples/example_config.h to select the channel plan and which example to build
+4. Modify the Dot-Examples/examples/example_config.h to select the channel plan and which example to build  
 By default, the OTA example is selected to build with the US channel plan
 
 5. Once the example is selected, modify the example source file to match the configuration of your gateway.
