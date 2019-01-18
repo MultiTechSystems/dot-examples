@@ -27,9 +27,9 @@ static std::string network_passphrase = "MultiTech";
 static uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
 static uint8_t network_key[] = { 0x1F, 0x33, 0xA1, 0x70, 0xA5, 0xF1, 0xFD, 0xA0, 0xAB, 0x69, 0x7A, 0xAE, 0x2B, 0x95, 0x91, 0x6B };
 static uint8_t frequency_sub_band = 1;
-static bool public_network = true;
+static lora::NetworkType public_network = lora::PUBLIC_LORAWAN;
 static uint8_t join_delay = 5;
-static uint8_t ack = 1;
+static uint8_t ack = 3;
 static bool adr = true;
 
 // Number of ping slots to open per beacon interval - see mDot.h
@@ -79,7 +79,7 @@ int main() {
     dot = mDot::getInstance(plan);
     assert(dot);
 
-    logInfo("mbed-os library version: %d", MBED_LIBRARY_VERSION);
+    logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
     // start from a well-known state
     logInfo("defaulting Dot configuration");

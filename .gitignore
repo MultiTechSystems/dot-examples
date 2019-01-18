@@ -1,5 +1,7 @@
 mbed-os
 .build
+libxDot-*.lib
+libmDot-*.lib
 /mdot/
 /mdot-library/
 /BUILD/
