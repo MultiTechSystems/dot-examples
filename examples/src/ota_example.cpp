@@ -86,7 +86,7 @@ int main() {
     dot->setEvents(&events);
 
     if (!dot->getStandbyFlag()) {
-        logInfo("mbed-os library version: %d", MBED_LIBRARY_VERSION);
+        logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
         // start from a well-known state
         logInfo("defaulting Dot configuration");
