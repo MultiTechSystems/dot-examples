@@ -37,6 +37,6 @@ void sleep_configure_io();
 
 void sleep_restore_io();
 
-void send_data(std::vector<uint8_t> data);
+int send_data(std::vector<uint8_t> data);
 
 #endif

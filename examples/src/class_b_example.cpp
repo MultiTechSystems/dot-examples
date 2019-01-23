@@ -140,6 +140,10 @@ int main() {
         return 0;
     }
 
+    // Start a timer to check the beacon was acquired
+    LowPowerTimer bcn_timer;
+    bcn_timer.start();
+
     while (true) {
         std::vector<uint8_t> tx_data;
         static bool send_uplink = true;
@@ -155,12 +159,27 @@ int main() {
                 osDelay(10);
             }
 
-            send_data(tx_data);
+            if (send_data(tx_data) != mDot::MDOT_OK) {
+                logError("Failed to inform the network server we are in class B");
+                logInfo("Reset the MCU to try again");
+                return 0;
+            }
 
             logInfo("Enqueued packets may now be scheduled on class B ping slots");
             send_uplink = false;
+            bcn_timer.stop();
         } else if (!events.BeaconLocked) {
             logInfo("Waiting to receive a beacon..");
+
+            if (bcn_timer.read() > lora::DEFAULT_BEACON_PERIOD) {
+                if (dot->setClass("B") != mDot::MDOT_OK) {
+                    logError("Failed to set network mode to class B");
+                    logInfo("Reset the MCU to try again");
+                    return 0;
+                }
+
+                bcn_timer.reset();
+            }
         }
 
         Thread::wait(10000);

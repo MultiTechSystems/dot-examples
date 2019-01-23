@@ -708,7 +708,7 @@ void sleep_restore_io() {
 #endif
 }
 
-void send_data(std::vector<uint8_t> data) {
+int send_data(std::vector<uint8_t> data) {
     int32_t ret;
 
     ret = dot->send(data);
@@ -717,5 +717,7 @@ void send_data(std::vector<uint8_t> data) {
     } else {
         logInfo("successfully sent data to %s", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway");
     }
+
+    return ret;
 }
 
