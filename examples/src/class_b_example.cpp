@@ -154,6 +154,12 @@ int main() {
         if (events.BeaconLocked && send_uplink) {
             logInfo("Acquired a beacon lock");
 
+            // Add a random delay before trying the uplink to avoid collisions w/ other motes
+            srand(dot->getRadioRandom());
+            uint32_t rand_delay = rand() % 5000;
+            logInfo("Applying a random delay of %d ms before class notification uplink", rand_delay);
+            osDelay(rand_delay);
+
             // Ensure the link is idle before trying to transmit
             while (!dot->getIsIdle()) {
                 osDelay(10);
