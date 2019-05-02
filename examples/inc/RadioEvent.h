@@ -72,11 +72,10 @@ public:
 
         if (flags->Bits.Rx) {
 
-            logDebug("Rx %d bytes", info->RxBufferSize);
+            logInfo("Rx %d bytes", info->RxBufferSize);
+
             if (info->RxBufferSize > 0) {
-#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
-                printf("Rx data: [%s]\r\n", mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
-#else
+#if ACTIVE_EXAMPLE != FOTA_EXAMPLE
                 // print RX data as string and hexadecimal
                 std::string rx((const char*)info->RxBuffer, info->RxBufferSize);
                 printf("Rx data: %s [%s]\r\n", rx.c_str(), mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
