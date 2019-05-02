@@ -50,7 +50,7 @@ This example demonstrates configuring the Dot for OTA join mode and communicatin
 This example demonstrates how to configure the dot for an OTA join, how to acquire a lock on a GPS synchronized beacon, and then to subsequently enter class B mode of operation.  After a successful join, the device will request to the dot-library to switch to class B. When this happens, the library will send an uplink to the network server (hence we must be joined first before entering this mode) requesting the GPS time to calculate when the next beacon is expected. Once this time elapses, the dot will open an rx window to demodulate the broadcasted beacon and fire an mDotEvent::BeaconRx event upon successful reception. After the beacon is received, the example sends an uplink which will have the class B bit in the packet's frame control set to indicate to the network server that downlinks may now be scheduled on ping slots. The lora-query application can be used to configure a Conduit gateway to communicate with a Dot in class B mode. For information on how to inform a third-party gateway that a Dot is operating in class B mode, see the gateway or network provider documentation.
 
 ### FOTA Example
-Full FOTA support is only available with mDot, xDot does not have the required external flash. xDot can use the FOTA example to dynamically join a multicast session only. After joining the multicast session the received Fragmentation packets could be handed to a host MCU for processing and at completion the firmware can be loaded into the xDot using the bootloader and y-modem. See [https://www.multitech.com/brands/multiconnect-xdot](xDot Developer Guide).
+Full FOTA support is only available with mDot, xDot does not have the required external flash. xDot can use the FOTA example to dynamically join a multicast session only. After joining the multicast session the received Fragmentation packets could be handed to a host MCU for processing and at completion the firmware can be loaded into the xDot using the bootloader and y-modem. See (xDot Developer Guide](https://www.multitech.com/brands/multiconnect-xdot).
 
 This example demonstrates how to incorporate over-the-air updates to an application. The example uses a Class C application. Class A or B functionality could also be used. The device will automatically enter into Class C operation for the FOTA operation, Class B would be disabled during the FOTA transfer.
 
@@ -75,7 +75,7 @@ Add fragmentation handling the the PacketRx event
     }
 ```
 
-The FOTA implementation has a few differences from the [https://lora-alliance.org/resource-hub/lorawan-fragmented-data-block-transport-specification-v100](LoRaWAN Protocol)
+The FOTA implementation has a few differences from the (LoRaWAN FOTA Protocol)[https://lora-alliance.org/resource-hub/lorawan-fragmented-data-block-transport-specification-v100)
 * Fragmentation Indexing starts at 0
 * McKEKey is 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
 * Start Time is a count-down in seconds to start of session
