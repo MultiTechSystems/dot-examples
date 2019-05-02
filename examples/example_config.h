@@ -7,6 +7,7 @@
 #define PEER_TO_PEER_EXAMPLE     4  // see peer_to_peer_example.cpp
 #define CLASS_C_EXAMPLE          5  // see class_c_example.cpp
 #define CLASS_B_EXAMPLE          6  // see class_b_example.cpp
+#define FOTA_EXAMPLE             7  // see fota_example.cpp
 
 // the active example is the one that will be compiled
 #if !defined(ACTIVE_EXAMPLE)
