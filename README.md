@@ -49,6 +49,38 @@ This example demonstrates configuring the Dot for OTA join mode and communicatin
 ### Class B Example
 This example demonstrates how to configure the dot for an OTA join, how to acquire a lock on a GPS synchronized beacon, and then to subsequently enter class B mode of operation.  After a successful join, the device will request to the dot-library to switch to class B. When this happens, the library will send an uplink to the network server (hence we must be joined first before entering this mode) requesting the GPS time to calculate when the next beacon is expected. Once this time elapses, the dot will open an rx window to demodulate the broadcasted beacon and fire an mDotEvent::BeaconRx event upon successful reception. After the beacon is received, the example sends an uplink which will have the class B bit in the packet's frame control set to indicate to the network server that downlinks may now be scheduled on ping slots. The lora-query application can be used to configure a Conduit gateway to communicate with a Dot in class B mode. For information on how to inform a third-party gateway that a Dot is operating in class B mode, see the gateway or network provider documentation.
 
+### FOTA Example
+Full FOTA support is only available with mDot, xDot does not have the required external flash. xDot can use the FOTA example to dynamically join a multicast session only. After joining the multicast session the received Fragmentation packets could be handed to a host MCU for processing and at completion the firmware can be loaded into the xDot using the bootloader and y-modem. See [xDot Developer Guide](https://www.multitech.com/brands/multiconnect-xdot).
+
+This example demonstrates how to incorporate over-the-air updates to an application. The example uses a Class C application. Class A or B functionality could also be used. The device will automatically enter into Class C operation for the FOTA operation, Class B would be disabled during the FOTA transfer.
+
+Add the following code to allow Fota to use the Dot instance
+>examples/src/fota_example.cpp
+```c
+    // Initialize FOTA singleton
+    Fota::getInstance(dot);
+```
+
+Add fragmentation handling the the PacketRx event
+>examples/inc/RadioEvent.h
+```c
+    virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, bool dupRx) {
+        mDotEvent::PacketRx(port, payload, size, rssi, snr, ctrl, slot, retries, address, dupRx);
+
+#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
+        if(port == 200 || port == 201 || port == 202) {
+            Fota::getInstance()->processCmd(payload, port, size);
+        }
+#endif
+    }
+```
+
+The FOTA implementation has a few differences from the [LoRaWAN FOTA Protocol](https://lora-alliance.org/resource-hub/lorawan-fragmented-data-block-transport-specification-v100)
+* Fragmentation Indexing starts at 0
+* McKEKey is 00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
+* Start Time is a count-down in seconds to start of session
+
+
 ### Peer to Peer Example
 This example demonstrates configuring Dots for peer to peer communication without a gateway. It should be compiled and run on two Dots. Peer to peer communication uses LoRa modulation but uses a single higher throughput (usually 500kHz or 250kHz) datarate. It is similar to class C operation - when a Dot isn't transmitting, it's listening for packets from the other Dot. Both Dots must be configured exactly the same for peer to peer communication to be successful. 
 
@@ -68,6 +100,8 @@ By default the OTA_EXAMPLE will be compiled and the US915 channel plan will be u
 #define MANUAL_EXAMPLE           3  // see manual_example.cpp
 #define PEER_TO_PEER_EXAMPLE     4  // see peer_to_peer_example.cpp
 #define CLASS_C_EXAMPLE          5  // see class_c_example.cpp
+#define CLASS_B_EXAMPLE          6  // see class_b_example.cpp
+#define FOTA_EXAMPLE             7  // see fota_example.cpp
  
 // the active example is the one that will be compiled
 #if !defined(ACTIVE_EXAMPLE)
