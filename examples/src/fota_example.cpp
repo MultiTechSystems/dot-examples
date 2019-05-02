@@ -187,8 +187,17 @@ int main() {
         // the Dot can't sleep in class C mode
         // it must be waiting for data from the gateway
         // send data every 30s
-        logInfo("waiting for 30s");
-        wait(30);
+        if (Fota::getInstance()->timeToStart() != 0) {
+            logInfo("waiting for 30s");
+            wait(30);
+        } else {
+            // Reduce uplinks during FOTA, dot cannot receive while transmitting
+            // Too many lost packets will cause FOTA to fail
+            logInfo("FOTA starting in %d seconds", Fota::getInstance()->timeToStart());
+            logInfo("waiting for 300s");
+            wait(300);
+        }
+
     }
 
     return 0;
