@@ -1,6 +1,6 @@
 #include "dot_util.h"
 #include "RadioEvent.h"
- 
+
 #if ACTIVE_EXAMPLE == AUTO_OTA_EXAMPLE
 
 /////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ int main() {
 #endif
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
-    
+
 #if CHANNEL_PLAN == CP_US915
     plan = new lora::ChannelPlan_US915();
 #elif CHANNEL_PLAN == CP_AU915
@@ -85,7 +85,7 @@ int main() {
     // attach the custom events handler
     dot->setEvents(&events);
 
-    if (!dot->getStandbyFlag()) {
+    if (!dot->getStandbyFlag() && !dot->getPreserveSession()) {
         logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
         // start from a well-known state
@@ -104,13 +104,17 @@ int main() {
                 logError("failed to set network join mode to AUTO_OTA");
             }
         }
+
+        // To preserve session over power-off or reset enable this flag
+        // dot->setPreserveSession(true);
+
         // in OTA and AUTO_OTA join modes, the credentials can be passed to the library as a name and passphrase or an ID and KEY
         // only one method or the other should be used!
         // network ID = crc64(network name)
         // network KEY = cmac(network passphrase)
         update_ota_config_name_phrase(network_name, network_passphrase, frequency_sub_band, network_type, ack);
         //update_ota_config_id_key(network_id, network_key, frequency_sub_band, network_type, ack);
-    
+
         // configure network link checks
         // network link checks are a good alternative to requiring the gateway to ACK every packet and should allow a single gateway to handle more Dots
         // check the link every count packets
@@ -123,13 +127,13 @@ int main() {
 
         // Configure the join delay
         dot->setJoinDelay(join_delay);
-    
+
         // save changes to configuration
         logInfo("saving configuration");
         if (!dot->saveConfig()) {
             logError("failed to save configuration");
         }
-    
+
         // display configuration
         display_config();
     }
@@ -158,7 +162,7 @@ int main() {
 
         // put the LSL29011 ambient light sensor into a low power state
         lux.setMode(ISL29011::PWR_DOWN);
-#else 
+#else
         // get some dummy data and send it to the gateway
         light = lux.read_u16();
         tx_data.push_back((light >> 8) & 0xFF);
@@ -172,7 +176,7 @@ int main() {
         //sleep_wake_interrupt_only(deep_sleep);
         sleep_wake_rtc_or_interrupt(deep_sleep);
     }
- 
+
     return 0;
 }
 
