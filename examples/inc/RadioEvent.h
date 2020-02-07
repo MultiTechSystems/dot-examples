@@ -4,6 +4,7 @@
 #include "dot_util.h"
 #include "mDotEvent.h"
 #include "Fota.h"
+#include "example_config.h"
 
 class RadioEvent : public mDotEvent
 {
