@@ -84,6 +84,15 @@ public:
             }
         }
     }
+
+
+#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
+    virtual void ServerTime(uint32_t seconds, uint8_t sub_seconds) {
+        mDotEvent::ServerTime(seconds, sub_seconds);
+
+        Fota::getInstance()->setClockOffset(seconds);
+    }
+#endif
 };
 
 #endif
