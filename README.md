@@ -62,9 +62,12 @@ Add the following code to allow Fota to use the Dot instance
 ```
 
 Add fragmentation handling the the PacketRx event
+
+Note: The type for snr changed from int8_t in 3.2.x to int16_t in 3.3.x library
+
 >examples/inc/RadioEvent.h
 ```c
-    virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, bool dupRx) {
+    virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int16_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, bool dupRx) {
         mDotEvent::PacketRx(port, payload, size, rssi, snr, ctrl, slot, retries, address, dupRx);
 
 #if ACTIVE_EXAMPLE == FOTA_EXAMPLE
