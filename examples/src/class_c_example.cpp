@@ -35,7 +35,7 @@ static bool adr = true;
 mDot* dot = NULL;
 lora::ChannelPlan* plan = NULL;
 
-Serial pc(USBTX, USBRX);
+mbed::UnbufferedSerial pc(USBTX, USBRX);
 
 #if defined(TARGET_XDOT_L151CC)
 I2C i2c(I2C_SDA, I2C_SCL);

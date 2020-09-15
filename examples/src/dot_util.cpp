@@ -301,7 +301,7 @@ void join_network() {
             uint32_t delay_s = (dot->getNextTxMs() / 1000) + 1;
             if (delay_s < 5) {
                 logInfo("waiting %lu s until next free channel", delay_s);
-                wait(delay_s);
+                ThisThread::sleep_for(std::chrono::seconds(delay_s));
             } else {
                 logInfo("sleeping %lu s until next free channel", delay_s);
                 dot->sleep(delay_s, mDot::RTC_ALARM, false);
