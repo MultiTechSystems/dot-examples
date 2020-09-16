@@ -164,7 +164,7 @@ int main() {
         // it must be waiting for data from the gateway
         // send data every 30s
         logInfo("waiting for 30s");
-        wait(30);
+        ThisThread::sleep_for(30s);
     }
  
     return 0;

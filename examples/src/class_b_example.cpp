@@ -158,11 +158,11 @@ int main() {
             srand(dot->getRadioRandom());
             uint32_t rand_delay = rand() % 5000;
             logInfo("Applying a random delay of %d ms before class notification uplink", rand_delay);
-            osDelay(rand_delay);
+            ThisThread::sleep_for(std::chrono::milliseconds(rand_delay));
 
             // Ensure the link is idle before trying to transmit
             while (!dot->getIsIdle()) {
-                osDelay(10);
+                ThisThread::sleep_for(10ms);
             }
 
             if (send_data(tx_data) != mDot::MDOT_OK) {
@@ -187,8 +187,7 @@ int main() {
                 bcn_timer.reset();
             }
         }
-
-        Thread::wait(10000);
+        ThisThread::sleep_for(10s);
     }
 
     return 0;

@@ -189,13 +189,13 @@ int main() {
         // send data every 30s
         if (Fota::getInstance()->timeToStart() != 0) {
             logInfo("waiting for 30s");
-            wait(30);
+            ThisThread::sleep_for(30s);
         } else {
             // Reduce uplinks during FOTA, dot cannot receive while transmitting
             // Too many lost packets will cause FOTA to fail
             logInfo("FOTA starting in %d seconds", Fota::getInstance()->timeToStart());
             logInfo("waiting for 300s");
-            wait(300);
+            ThisThread::sleep_for(300s);
         }
 
     }

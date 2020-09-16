@@ -141,7 +141,7 @@ int main() {
         default:
             while (true) {
                 logFatal("no known channel plan in use - extra configuration is needed!");
-                wait(5);
+                ThisThread::sleep_for(5s);
             }
             break;
     }
@@ -195,7 +195,7 @@ int main() {
         // it must be waiting for data from the other Dot
         // send data every 5 seconds
         logInfo("waiting for 5s");
-        wait(5);
+        ThisThread::sleep_for(5s);
     }
  
     return 0;
