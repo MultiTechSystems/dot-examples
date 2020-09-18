@@ -18,19 +18,33 @@
 
 ////////////////////////////////////////////////////////////////////////////
 // -------------------- DEFINITIONS REQUIRED ---------------------------- //
-// mDot - add define for FOTA in mbed_app.json or on command line         //
+// Add define for FOTA in mbed_app.json or on command line                //
 //   Command line                                                         //
 //     mbed compile -t GCC_ARM -m MTS_MDOT_F411RE -DFOTA=1                //
 //   mbed_app.json                                                        //
 //     {                                                                  //
 //        "macros": [                                                     //
-//          "FOTA=1"                                                      //
+//          "FOTA"                                                        //
 //        ]                                                               //
 //     }                                                                  //
 //                                                                        //
-// xDot - DO NOT define FOTA, there is no file system support available   //
-//        Only multicast is supported for xDot, external MCU and Flash    //
-//        are required to support Fragmentation                           //
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+// -------------------------- XDOT EXTERNAL STORAGE --------------------- //
+// An external storage device is required for FOTA on an XDot.  The       //
+// storage device must meet the following criteria:                       //
+// * Work with MBed OS DataFlashBlockDevice or SPIFBlockDevice classes    //
+// * Maximum 4KB sector erase size                                        //
+// * Maximum 512 byte page size                                           //
+// * SPIF type components must support Serial Flash Discoverable          //
+//   Parameters (SFDP)                                                    //
+//                                                                        //
+// Refer to mbed_app.json included in this project for configuration      //
+// parameters requried for external storage.                              //
+//                                                                        //
+// Modify code below to create a BlockDevice object.                      //
 ////////////////////////////////////////////////////////////////////////////
 
 
@@ -91,9 +105,21 @@ int main() {
 #elif CHANNEL_PLAN == CP_IN865
     plan = new lora::ChannelPlan_IN865();
 #endif
+
     assert(plan);
 
+#if defined(TARGET_XDOT_L151CC)
+
+    mbed::BlockDevice* ext_bd = NULL;
+
+    // XDot requires an external storage device for FOTA (see above).
+    // If one is connected provide the block device object to the mDot instance.
+    //ext_bd = new SPIFBlockDevice();
+    //ext_bd = new DataFlashBlockDevice();
+    dot = mDot::getInstance(plan, ext_bd);
+#else
     dot = mDot::getInstance(plan);
+#endif
     assert(dot);
 
     logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
