@@ -172,22 +172,22 @@ Stable and development libraries are available for both mDot and xDot platforms.
 
 Bleeding edge development version of the mDot library for mbed 5. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.  
 
-mbed add [https://github.com/MultiTechSystems/libmDot-dev-mbed5](https://github.com/MultiTechSystems/libmDot-dev)
+mbed add [https://github.com/MultiTechSystems/libmDot-dev](https://github.com/MultiTechSystems/libmDot-dev)
 
 #### Stable library for mDot
 
 Stable version of the mDot library for mbed 5. This version of the library is suitable for deployment scenarios. See lastest commit message for version of mbed-os library that has been tested against.  
 
-mbed add [https://github.com/MultiTechSystems/libmDot-mbed5](https://github.com/MultiTechSystems/libmDot)
+mbed add [https://github.com/MultiTechSystems/libmDot](https://github.com/MultiTechSystems/libmDot)
   
 ### xDot Library
 #### Development library for xDot
 Bleeding edge development version of the xDot library for mbed 5. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.  
 
-mbed add [https://github.com/MultiTechSystems/libxDot-dev-mbed5](https://github.com/MultiTechSystems/libxDot-dev)
+mbed add [https://github.com/MultiTechSystems/libxDot-dev](https://github.com/MultiTechSystems/libxDot-dev)
 
 #### Stable library for xDot
 
 Stable version of the xDot library for mbed 5. This version of the library is suitable for deployment scenarios.  
 
-mbed add [https://github.com/MultiTechSystems/libxDot-mbed5](https://github.com/MultiTechSystems/libxDot)
+mbed add [https://github.com/MultiTechSystems/libxDot](https://github.com/MultiTechSystems/libxDot)
