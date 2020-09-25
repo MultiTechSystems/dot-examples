@@ -3,6 +3,12 @@
 
 #if ACTIVE_EXAMPLE == FOTA_EXAMPLE
 
+
+#if defined(TARGET_XDOT_L151CC)
+//#include "SPIFBlockDevice.h"
+//#include "DataFlashBlockDevice.h"
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // -------------------- DOT LIBRARY REQUIRED ------------------------------//
 // * Because these example programs can be used for both mDot and xDot     //
@@ -114,6 +120,9 @@ int main() {
 
     // XDot requires an external storage device for FOTA (see above).
     // If one is connected provide the block device object to the mDot instance.
+    //
+    // ** Uncomment the appropriate block device here and include statement above
+    //
     //ext_bd = new SPIFBlockDevice();
     //ext_bd = new DataFlashBlockDevice();
     dot = mDot::getInstance(plan, ext_bd);
