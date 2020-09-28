@@ -58,22 +58,9 @@ int main() {
 #endif
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
-    
-#if CHANNEL_PLAN == CP_US915
-    plan = new lora::ChannelPlan_US915();
-#elif CHANNEL_PLAN == CP_AU915
-    plan = new lora::ChannelPlan_AU915();
-#elif CHANNEL_PLAN == CP_EU868
-    plan = new lora::ChannelPlan_EU868();
-#elif CHANNEL_PLAN == CP_KR920
-    plan = new lora::ChannelPlan_KR920();
-#elif CHANNEL_PLAN == CP_AS923
-    plan = new lora::ChannelPlan_AS923();
-#elif CHANNEL_PLAN == CP_AS923_JAPAN
-    plan = new lora::ChannelPlan_AS923_Japan();
-#elif CHANNEL_PLAN == CP_IN865
-    plan = new lora::ChannelPlan_IN865();
-#endif
+
+    // Create channel plan
+    plan = create_channel_plan();
     assert(plan);
 
     dot = mDot::getInstance(plan);

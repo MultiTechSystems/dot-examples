@@ -12,6 +12,39 @@ uint32_t portH[6];
 #endif
 
 
+lora::ChannelPlan* create_channel_plan() {
+    lora::ChannelPlan* plan;
+
+#if CHANNEL_PLAN == CP_US915
+    plan = new lora::ChannelPlan_US915();
+#elif CHANNEL_PLAN == CP_AU915
+    plan = new lora::ChannelPlan_AU915();
+#elif CHANNEL_PLAN == CP_EU868
+    plan = new lora::ChannelPlan_EU868();
+#elif CHANNEL_PLAN == CP_KR920
+    plan = new lora::ChannelPlan_KR920();
+#elif CHANNEL_PLAN == CP_IN865
+    plan = new lora::ChannelPlan_IN865();
+#elif CHANNEL_PLAN == CP_AS923
+    plan = new lora::ChannelPlan_AS923();
+#elif CHANNEL_PLAN == CP_AS923_2
+    plan = new lora::ChannelPlan_AS923();
+#elif CHANNEL_PLAN == CP_AS923_3
+    plan = new lora::ChannelPlan_AS923();
+#elif CHANNEL_PLAN == CP_AS923_JAPAN
+    plan = new lora::ChannelPlan_AS923_Japan();
+#elif CHANNEL_PLAN == CP_AS923_JAPAN1
+    plan = new lora::ChannelPlan_AS923_Japan1();
+#elif CHANNEL_PLAN == CP_AS923_JAPAN2
+    plan = new lora::ChannelPlan_AS923_Japan2();
+#elif CHANNEL_PLAN == CP_RU864
+    plan = new lora::ChannelPlan_RU864();
+#endif
+
+    return plan;
+}
+
+
 void display_config() {
     // display configuration and library version information
     logInfo("=====================");
