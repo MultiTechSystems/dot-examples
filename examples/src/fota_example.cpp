@@ -125,6 +125,7 @@ int main() {
     //
     //ext_bd = new SPIFBlockDevice();
     //ext_bd = new DataFlashBlockDevice();
+    ext_bd->init();
     dot = mDot::getInstance(plan, ext_bd);
 #else
     dot = mDot::getInstance(plan);
