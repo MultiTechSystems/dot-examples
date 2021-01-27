@@ -26,7 +26,7 @@ static uint8_t data_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 
 mDot* dot = NULL;
 lora::ChannelPlan* plan = NULL;
 
-Serial pc(USBTX, USBRX);
+mbed::UnbufferedSerial pc(USBTX, USBRX);
 
 #if defined(TARGET_XDOT_L151CC)
 I2C i2c(I2C_SDA, I2C_SCL);
@@ -50,22 +50,9 @@ int main() {
 #endif
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
-    
-#if CHANNEL_PLAN == CP_US915
-    plan = new lora::ChannelPlan_US915();
-#elif CHANNEL_PLAN == CP_AU915
-    plan = new lora::ChannelPlan_AU915();
-#elif CHANNEL_PLAN == CP_EU868
-    plan = new lora::ChannelPlan_EU868();
-#elif CHANNEL_PLAN == CP_KR920
-    plan = new lora::ChannelPlan_KR920();
-#elif CHANNEL_PLAN == CP_AS923
-    plan = new lora::ChannelPlan_AS923();
-#elif CHANNEL_PLAN == CP_AS923_JAPAN
-    plan = new lora::ChannelPlan_AS923_Japan();
-#elif CHANNEL_PLAN == CP_IN865
-    plan = new lora::ChannelPlan_IN865();
-#endif
+
+    // Create channel plan
+    plan = create_channel_plan();
     assert(plan);
 
     dot = mDot::getInstance(plan);
@@ -141,7 +128,7 @@ int main() {
         default:
             while (true) {
                 logFatal("no known channel plan in use - extra configuration is needed!");
-                wait(5);
+                ThisThread::sleep_for(5s);
             }
             break;
     }
@@ -195,7 +182,7 @@ int main() {
         // it must be waiting for data from the other Dot
         // send data every 5 seconds
         logInfo("waiting for 5s");
-        wait(5);
+        ThisThread::sleep_for(5s);
     }
  
     return 0;

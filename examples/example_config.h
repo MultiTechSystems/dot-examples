@@ -21,8 +21,14 @@
 //      CP_EU868
 //      CP_KR920
 //      CP_AS923
+//      CP_AS923_2
+//      CP_AS923_3
 //      CP_AS923_JAPAN
+//      CP_AS923_JAPAN1
+//      CP_AS923_JAPAN2
 //      CP_IN865
+//      CP_RU864
+
 #if !defined(CHANNEL_PLAN)
 #define CHANNEL_PLAN CP_US915
 #endif

@@ -1,0 +1,30 @@
+{
+    "macros": [
+        "FOTA"
+    ],
+    "target_overrides": {
+        "*": {
+            "target.printf_lib": "std"
+        },
+        "MTS_MDOT_F411RE": {
+            "target.app_offset": "0x10000",
+            "target.bootloader_img": "bootloaders/mdot-boot.bin"
+        },
+        "XDOT_L151CC": {
+            "target.app_offset": "0x0D000",
+            "target.bootloader_img": "bootloaders/xdot-boot.bin",
+            
+            "target.components_add": ["SPIF", "DATAFLASH"],
+            "spif-driver.SPI_MOSI": "SPI_MOSI",
+            "spif-driver.SPI_MISO": "SPI_MISO",
+            "spif-driver.SPI_CLK": "SPI_SCK",
+            "spif-driver.SPI_CS": "SPI_NSS",
+
+            "dataflash.SPI_MOSI": "SPI_MOSI",
+            "dataflash.SPI_MISO": "SPI_MISO",
+            "dataflash.SPI_CLK": "SPI_SCK",
+            "dataflash.SPI_CS": "SPI_NSS",
+            "dataflash.binary-size": 1
+        }
+    }
+}

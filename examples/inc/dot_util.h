@@ -11,6 +11,8 @@
 
 extern mDot* dot;
 
+lora::ChannelPlan* create_channel_plan();
+
 void display_config();
 
 void update_ota_config_name_phrase(std::string network_name, std::string network_passphrase, uint8_t frequency_sub_band, lora::NetworkType network_type, uint8_t ack);

@@ -3,6 +3,12 @@
 
 #if ACTIVE_EXAMPLE == FOTA_EXAMPLE
 
+
+#if defined(TARGET_XDOT_L151CC)
+//#include "SPIFBlockDevice.h"
+//#include "DataFlashBlockDevice.h"
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // -------------------- DOT LIBRARY REQUIRED ------------------------------//
 // * Because these example programs can be used for both mDot and xDot     //
@@ -18,19 +24,33 @@
 
 ////////////////////////////////////////////////////////////////////////////
 // -------------------- DEFINITIONS REQUIRED ---------------------------- //
-// mDot - add define for FOTA in mbed_app.json or on command line         //
+// Add define for FOTA in mbed_app.json or on command line                //
 //   Command line                                                         //
 //     mbed compile -t GCC_ARM -m MTS_MDOT_F411RE -DFOTA=1                //
 //   mbed_app.json                                                        //
 //     {                                                                  //
 //        "macros": [                                                     //
-//          "FOTA=1"                                                      //
+//          "FOTA"                                                        //
 //        ]                                                               //
 //     }                                                                  //
 //                                                                        //
-// xDot - DO NOT define FOTA, there is no file system support available   //
-//        Only multicast is supported for xDot, external MCU and Flash    //
-//        are required to support Fragmentation                           //
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+// -------------------------- XDOT EXTERNAL STORAGE --------------------- //
+// An external storage device is required for FOTA on an XDot.  The       //
+// storage device must meet the following criteria:                       //
+// * Work with MBed OS DataFlashBlockDevice or SPIFBlockDevice classes    //
+// * Maximum 4KB sector erase size                                        //
+// * Maximum 512 byte page size                                           //
+// * SPIF type components must support Serial Flash Discoverable          //
+//   Parameters (SFDP)                                                    //
+//                                                                        //
+// Refer to mbed_app.json included in this project for configuration      //
+// parameters requried for external storage.                              //
+//                                                                        //
+// Modify code below to create a BlockDevice object.                      //
 ////////////////////////////////////////////////////////////////////////////
 
 
@@ -55,7 +75,7 @@ static bool adr = true;
 mDot* dot = NULL;
 lora::ChannelPlan* plan = NULL;
 
-Serial pc(USBTX, USBRX);
+mbed::UnbufferedSerial pc(USBTX, USBRX);
 
 #if defined(TARGET_XDOT_L151CC)
 I2C i2c(I2C_SDA, I2C_SCL);
@@ -76,24 +96,26 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
-#if CHANNEL_PLAN == CP_US915
-    plan = new lora::ChannelPlan_US915();
-#elif CHANNEL_PLAN == CP_AU915
-    plan = new lora::ChannelPlan_AU915();
-#elif CHANNEL_PLAN == CP_EU868
-    plan = new lora::ChannelPlan_EU868();
-#elif CHANNEL_PLAN == CP_KR920
-    plan = new lora::ChannelPlan_KR920();
-#elif CHANNEL_PLAN == CP_AS923
-    plan = new lora::ChannelPlan_AS923();
-#elif CHANNEL_PLAN == CP_AS923_JAPAN
-    plan = new lora::ChannelPlan_AS923_Japan();
-#elif CHANNEL_PLAN == CP_IN865
-    plan = new lora::ChannelPlan_IN865();
-#endif
+    // Create channel plan
+    plan = create_channel_plan();
     assert(plan);
 
+#if defined(TARGET_XDOT_L151CC)
+
+    mbed::BlockDevice* ext_bd = NULL;
+
+    // XDot requires an external storage device for FOTA (see above).
+    // If one is connected provide the block device object to the mDot instance.
+    //
+    // ** Uncomment the appropriate block device here and include statement above
+    //
+    //ext_bd = new SPIFBlockDevice();
+    //ext_bd = new DataFlashBlockDevice();
+    ext_bd->init();
+    dot = mDot::getInstance(plan, ext_bd);
+#else
     dot = mDot::getInstance(plan);
+#endif
     assert(dot);
 
     logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
@@ -189,13 +211,13 @@ int main() {
         // send data every 30s
         if (Fota::getInstance()->timeToStart() != 0) {
             logInfo("waiting for 30s");
-            wait(30);
+            ThisThread::sleep_for(30s);
         } else {
             // Reduce uplinks during FOTA, dot cannot receive while transmitting
             // Too many lost packets will cause FOTA to fail
             logInfo("FOTA starting in %d seconds", Fota::getInstance()->timeToStart());
             logInfo("waiting for 300s");
-            wait(300);
+            ThisThread::sleep_for(300s);
         }
 
     }
