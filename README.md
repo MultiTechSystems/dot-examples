@@ -30,6 +30,16 @@ Make sure the network_name, network_passphrase, frequency_sub_band (US), public_
 
 _When compiling for XDot GCC can cause out-of-memory errors._
 
+### Programming Over Serial
+
+The lastest bootloader requires firmware images to be application only and have a CRC appended. [Multitool](https://pypi.org/project/mtsmultitool) can be used to transfer firmware files over serial.
+
+Example multitool commands for stripping the bootloader, appending a CRC, and sending a file to an mDot or xDot over serial.
+```
+multitool device upgrade -b COM3 MTDOT mbed_output.bin
+multitool device upgrade -b COM3 XDOT mbed_output.bin
+```
+
 ## Example Programs Description
 This application contains multiple example programs. Each example demonstrates a different way to configure and use a Dot. A short summary of each example is provided below. Common code used by multiple examples is in the dot_utils.cpp file.
 
@@ -57,7 +67,9 @@ This example demonstrates configuring the Dot for OTA join mode and communicatin
 This example demonstrates how to configure the dot for an OTA join, how to acquire a lock on a GPS synchronized beacon, and then to subsequently enter class B mode of operation.  After a successful join, the device will request to the dot-library to switch to class B. When this happens, the library will send an uplink to the network server (hence we must be joined first before entering this mode) requesting the GPS time to calculate when the next beacon is expected. Once this time elapses, the dot will open an rx window to demodulate the broadcasted beacon and fire an mDotEvent::BeaconRx event upon successful reception. After the beacon is received, the example sends an uplink which will have the class B bit in the packet's frame control set to indicate to the network server that downlinks may now be scheduled on ping slots. The lora-query application can be used to configure a Conduit gateway to communicate with a Dot in class B mode. For information on how to inform a third-party gateway that a Dot is operating in class B mode, see the gateway or network provider documentation.
 
 ### FOTA Example
-Full FOTA support is available on mDot and on xDot with external flash. Without external flash xDot can use the FOTA example to dynamically join a multicast session only. After joining the multicast session the received Fragmentation packets could be handed to a host MCU for processing and at completion the firmware can be loaded into the xDot using the bootloader and y-modem. See [xDot Developer Guide](https://www.multitech.com/brands/multiconnect-xdot).
+Full FOTA support is available on mDot and on xDot with external flash. See [this article](https://multitechsystems.github.io/dot-development-xdot) for details on adding external flash for xDot FOTA.
+
+Without external flash xDot can use the FOTA example to dynamically join a multicast session only. After joining the multicast session the received Fragmentation packets could be handed to a host MCU for processing and at completion the firmware can be loaded into the xDot using the bootloader and y-modem. See [xDot Developer Guide](https://www.multitech.com/brands/multiconnect-xdot).
 
 This example demonstrates how to incorporate over-the-air updates to an application. The example uses a Class C application. Class A or B functionality could also be used. The device will automatically enter into Class C operation for the FOTA operation, Class B would be disabled during the FOTA transfer.
 
@@ -74,8 +86,8 @@ Note: The type for snr changed from int8_t in 3.2.x to int16_t in 3.3.x library
 
 >examples/inc/RadioEvent.h
 ```c
-    virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int16_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, bool dupRx) {
-        mDotEvent::PacketRx(port, payload, size, rssi, snr, ctrl, slot, retries, address, dupRx);
+    virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int16_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, uint32_t fcnt, bool dupRx) {
+        mDotEvent::PacketRx(port, payload, size, rssi, snr, ctrl, slot, retries, address, fcnt, dupRx);
 
 #if ACTIVE_EXAMPLE == FOTA_EXAMPLE
         if(port == 200 || port == 201 || port == 202) {
@@ -170,24 +182,24 @@ Stable and development libraries are available for both mDot and xDot platforms.
 ### mDot Library
 #### Development library for mDot
 
-Bleeding edge development version of the mDot library for mbed 5. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.  
+Bleeding edge development version of the mDot library for mbed 6. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.  
 
 mbed add [https://github.com/MultiTechSystems/libmDot-dev](https://github.com/MultiTechSystems/libmDot-dev)
 
 #### Stable library for mDot
 
-Stable version of the mDot library for mbed 5. This version of the library is suitable for deployment scenarios. See lastest commit message for version of mbed-os library that has been tested against.  
+Stable version of the mDot library for mbed 6. This version of the library is suitable for deployment scenarios. See lastest commit message for version of mbed-os library that has been tested against.  
 
 mbed add [https://github.com/MultiTechSystems/libmDot](https://github.com/MultiTechSystems/libmDot)
   
 ### xDot Library
 #### Development library for xDot
-Bleeding edge development version of the xDot library for mbed 5. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.  
+Bleeding edge development version of the xDot library for mbed 6. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.  
 
 mbed add [https://github.com/MultiTechSystems/libxDot-dev](https://github.com/MultiTechSystems/libxDot-dev)
 
 #### Stable library for xDot
 
-Stable version of the xDot library for mbed 5. This version of the library is suitable for deployment scenarios.  
+Stable version of the xDot library for mbed 6. This version of the library is suitable for deployment scenarios.  
 
 mbed add [https://github.com/MultiTechSystems/libxDot](https://github.com/MultiTechSystems/libxDot)
