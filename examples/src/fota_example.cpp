@@ -3,10 +3,13 @@
 
 #if ACTIVE_EXAMPLE == FOTA_EXAMPLE
 
+#if !defined(FOTA)
+#define FOTA 1
+#endif
 
-#if defined(TARGET_XDOT_L151CC)
-//#include "SPIFBlockDevice.h"
-//#include "DataFlashBlockDevice.h"
+#if defined(TARGET_XDOT_L151CC) && defined(FOTA)
+#include "SPIFBlockDevice.h"
+#include "DataFlashBlockDevice.h"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -62,11 +65,11 @@
 //     the network ID (8 bytes) and KEY (16 bytes)         //
 /////////////////////////////////////////////////////////////
 
-static std::string network_name = "MultiTech";
-static std::string network_passphrase = "MultiTech";
+static std::string network_name = "sad face";
+static std::string network_passphrase = "happy face";
 static uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
 static uint8_t network_key[] = { 0x1F, 0x33, 0xA1, 0x70, 0xA5, 0xF1, 0xFD, 0xA0, 0xAB, 0x69, 0x7A, 0xAE, 0x2B, 0x95, 0x91, 0x6B };
-static uint8_t frequency_sub_band = 0;
+static uint8_t frequency_sub_band = 1;
 static lora::NetworkType network_type = lora::PUBLIC_LORAWAN;
 static uint8_t join_delay = 5;
 static uint8_t ack = 1;
@@ -84,6 +87,39 @@ ISL29011 lux(i2c);
 AnalogIn lux(XBEE_AD0);
 #endif
 
+
+#if defined(TARGET_XDOT_L151CC) && defined(FOTA)
+
+mbed::BlockDevice* ext_bd = NULL;
+
+mbed::BlockDevice * mdot_override_external_block_device()
+{
+    if (ext_bd == NULL) {
+        ext_bd = new SPIFBlockDevice();
+        int ret = ext_bd->init();
+        if (ext_bd->init() < 0) {
+            delete ext_bd;
+            ext_bd = new DataFlashBlockDevice();
+            ret = ext_bd->init();
+            // Check for zero size because DataFlashBlockDevice doesn't
+            // return an error if the chip is not present
+            if ((ret < 0) || (ext_bd->size() == 0)) {
+                delete ext_bd;
+                ext_bd = NULL;
+            }
+        }
+
+        if (ext_bd != NULL) {
+            logInfo("External flash device detected, type: %s, size: 0x%08x",
+                ext_bd->get_type(), (uint32_t)ext_bd->size());
+        }
+    }
+
+    return ext_bd;
+}
+#endif
+
+
 int main() {
     // Custom event handler for automatically displaying RX data
     RadioEvent events;
@@ -100,22 +136,7 @@ int main() {
     plan = create_channel_plan();
     assert(plan);
 
-#if defined(TARGET_XDOT_L151CC)
-
-    mbed::BlockDevice* ext_bd = NULL;
-
-    // XDot requires an external storage device for FOTA (see above).
-    // If one is connected provide the block device object to the mDot instance.
-    //
-    // ** Uncomment the appropriate block device here and include statement above
-    //
-    //ext_bd = new SPIFBlockDevice();
-    //ext_bd = new DataFlashBlockDevice();
-    ext_bd->init();
-    dot = mDot::getInstance(plan, ext_bd);
-#else
     dot = mDot::getInstance(plan);
-#endif
     assert(dot);
 
     logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);

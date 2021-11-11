@@ -15,6 +15,18 @@
 #endif
 
 // the active channel plan is the one that will be compiled
+// The Channel Plan should be chosen with command line arguments or in the mbed_app.json file macros section.
+
+// -DCHANNEL_PLAN=CP_US915
+// -DCHANNEL_PLAN=CP_AS923
+// -DCHANNEL_PLAN=CP_AS923_3
+// -DCHANNEL_PLAN=CP_AS923_JAPAN2
+
+//  "macros": [
+//     "FOTA",
+//     "CHANNEL_PLAN=CP_AS923_2"
+ // ],
+
 // options are :
 //      CP_US915
 //      CP_AU915
@@ -23,14 +35,12 @@
 //      CP_AS923
 //      CP_AS923_2
 //      CP_AS923_3
+//      CP_AS923_4
 //      CP_AS923_JAPAN
 //      CP_AS923_JAPAN1
 //      CP_AS923_JAPAN2
 //      CP_IN865
 //      CP_RU864
 
-#if !defined(CHANNEL_PLAN)
-#define CHANNEL_PLAN CP_US915
 #endif
 
-#endif

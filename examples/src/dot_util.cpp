@@ -31,6 +31,8 @@ lora::ChannelPlan* create_channel_plan() {
     plan = new lora::ChannelPlan_AS923();
 #elif CHANNEL_PLAN == CP_AS923_3
     plan = new lora::ChannelPlan_AS923();
+#elif CHANNEL_PLAN == CP_AS923_4
+    plan = new lora::ChannelPlan_AS923();
 #elif CHANNEL_PLAN == CP_AS923_JAPAN
     plan = new lora::ChannelPlan_AS923_Japan();
 #elif CHANNEL_PLAN == CP_AS923_JAPAN1
@@ -107,21 +109,21 @@ void update_ota_config_name_phrase(std::string network_name, std::string network
     uint8_t current_frequency_sub_band = dot->getFrequencySubBand();
     uint8_t current_network_type = dot->getPublicNetwork();
     uint8_t current_ack = dot->getAck();
-    
+
     if (current_network_name != network_name) {
         logInfo("changing network name from \"%s\" to \"%s\"", current_network_name.c_str(), network_name.c_str());
         if (dot->setNetworkName(network_name) != mDot::MDOT_OK) {
             logError("failed to set network name to \"%s\"", network_name.c_str());
         }
     }
-    
+
     if (current_network_passphrase != network_passphrase) {
         logInfo("changing network passphrase from \"%s\" to \"%s\"", current_network_passphrase.c_str(), network_passphrase.c_str());
         if (dot->setNetworkPassphrase(network_passphrase) != mDot::MDOT_OK) {
             logError("failed to set network passphrase to \"%s\"", network_passphrase.c_str());
         }
     }
-    
+
     if (lora::ChannelPlan::IsPlanFixed(dot->getFrequencyBand())) {
 	if (current_frequency_sub_band != frequency_sub_band) {
 	    logInfo("changing frequency sub band from %u to %u", current_frequency_sub_band, frequency_sub_band);
@@ -154,21 +156,21 @@ void update_ota_config_id_key(uint8_t *network_id, uint8_t *network_key, uint8_t
 
     std::vector<uint8_t> network_id_vector(network_id, network_id + 8);
     std::vector<uint8_t> network_key_vector(network_key, network_key + 16);
-    
+
     if (current_network_id != network_id_vector) {
         logInfo("changing network ID from \"%s\" to \"%s\"", mts::Text::bin2hexString(current_network_id).c_str(), mts::Text::bin2hexString(network_id_vector).c_str());
         if (dot->setNetworkId(network_id_vector) != mDot::MDOT_OK) {
             logError("failed to set network ID to \"%s\"", mts::Text::bin2hexString(network_id_vector).c_str());
         }
     }
-    
+
     if (current_network_key != network_key_vector) {
         logInfo("changing network KEY from \"%s\" to \"%s\"", mts::Text::bin2hexString(current_network_key).c_str(), mts::Text::bin2hexString(network_key_vector).c_str());
         if (dot->setNetworkKey(network_key_vector) != mDot::MDOT_OK) {
             logError("failed to set network KEY to \"%s\"", mts::Text::bin2hexString(network_key_vector).c_str());
         }
     }
-    
+
     if (lora::ChannelPlan::IsPlanFixed(dot->getFrequencyBand())) {
 	if (current_frequency_sub_band != frequency_sub_band) {
 	    logInfo("changing frequency sub band from %u to %u", current_frequency_sub_band, frequency_sub_band);
@@ -177,13 +179,13 @@ void update_ota_config_id_key(uint8_t *network_id, uint8_t *network_key, uint8_t
 	    }
 	}
     }
-    
+
     if (current_network_type != network_type) {
         if (dot->setPublicNetwork(network_type) != mDot::MDOT_OK) {
             logError("failed to set network type");
         }
     }
-    
+
     if (current_ack != ack) {
         logInfo("changing acks from %u to %u", current_ack, ack);
         if (dot->setAck(ack) != mDot::MDOT_OK) {
@@ -210,34 +212,34 @@ void update_manual_config(uint8_t *network_address, uint8_t *network_session_key
             logError("failed to set network address to \"%s\"", mts::Text::bin2hexString(network_address_vector).c_str());
         }
     }
-    
+
     if (current_network_session_key != network_session_key_vector) {
         logInfo("changing network session key from \"%s\" to \"%s\"", mts::Text::bin2hexString(current_network_session_key).c_str(), mts::Text::bin2hexString(network_session_key_vector).c_str());
         if (dot->setNetworkSessionKey(network_session_key_vector) != mDot::MDOT_OK) {
             logError("failed to set network session key to \"%s\"", mts::Text::bin2hexString(network_session_key_vector).c_str());
         }
     }
-    
+
     if (current_data_session_key != data_session_key_vector) {
         logInfo("changing data session key from \"%s\" to \"%s\"", mts::Text::bin2hexString(current_data_session_key).c_str(), mts::Text::bin2hexString(data_session_key_vector).c_str());
         if (dot->setDataSessionKey(data_session_key_vector) != mDot::MDOT_OK) {
             logError("failed to set data session key to \"%s\"", mts::Text::bin2hexString(data_session_key_vector).c_str());
         }
     }
-    
+
     if (current_frequency_sub_band != frequency_sub_band) {
         logInfo("changing frequency sub band from %u to %u", current_frequency_sub_band, frequency_sub_band);
         if (dot->setFrequencySubBand(frequency_sub_band) != mDot::MDOT_OK) {
             logError("failed to set frequency sub band to %u", frequency_sub_band);
         }
     }
-    
+
     if (current_network_type != network_type) {
         if (dot->setPublicNetwork(network_type) != mDot::MDOT_OK) {
             logError("failed to set network type");
         }
     }
-    
+
     if (current_ack != ack) {
         logInfo("changing acks from %u to %u", current_ack, ack);
         if (dot->setAck(ack) != mDot::MDOT_OK) {
@@ -264,21 +266,21 @@ void update_peer_to_peer_config(uint8_t *network_address, uint8_t *network_sessi
             logError("failed to set network address to \"%s\"", mts::Text::bin2hexString(network_address_vector).c_str());
         }
     }
-    
+
     if (current_network_session_key != network_session_key_vector) {
         logInfo("changing network session key from \"%s\" to \"%s\"", mts::Text::bin2hexString(current_network_session_key).c_str(), mts::Text::bin2hexString(network_session_key_vector).c_str());
         if (dot->setNetworkSessionKey(network_session_key_vector) != mDot::MDOT_OK) {
             logError("failed to set network session key to \"%s\"", mts::Text::bin2hexString(network_session_key_vector).c_str());
         }
     }
-    
+
     if (current_data_session_key != data_session_key_vector) {
         logInfo("changing data session key from \"%s\" to \"%s\"", mts::Text::bin2hexString(current_data_session_key).c_str(), mts::Text::bin2hexString(data_session_key_vector).c_str());
         if (dot->setDataSessionKey(data_session_key_vector) != mDot::MDOT_OK) {
             logError("failed to set data session key to \"%s\"", mts::Text::bin2hexString(data_session_key_vector).c_str());
         }
     }
-    
+
     if (current_tx_frequency != tx_frequency) {
 	logInfo("changing TX frequency from %lu to %lu", current_tx_frequency, tx_frequency);
 	if (dot->setTxFrequency(tx_frequency) != mDot::MDOT_OK) {
@@ -323,7 +325,7 @@ void update_network_link_check_config(uint8_t link_check_count, uint8_t link_che
 void join_network() {
     int32_t j_attempts = 0;
     int32_t ret = mDot::MDOT_ERROR;
-    
+
     // attempt to join the network
     while (ret != mDot::MDOT_OK) {
         logInfo("attempt %d to join network", ++j_attempts);
@@ -350,7 +352,7 @@ void sleep_wake_rtc_only(bool deepsleep) {
     if (delay_s < 10) {
         delay_s = 10;
     }
-    
+
     logInfo("%ssleeping %lus", deepsleep ? "deep" : "", delay_s);
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
 
@@ -371,7 +373,7 @@ void sleep_wake_rtc_only(bool deepsleep) {
 	// configure GPIOs for lowest current
 	sleep_configure_io();
     }
-    
+
     // go to sleep/deepsleep for delay_s seconds and wake using the RTC alarm
     dot->sleep(delay_s, mDot::RTC_ALARM, deepsleep);
 
@@ -389,7 +391,7 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     } else {
         // configure WAKE pin (connected to S2 on xDot-DK) as the pin that will wake the xDot from low power modes
         //      other pins can be confgured instead: GPIO0-3 or UART_RX
-        dot->setWakePin(WAKE);    
+        dot->setWakePin(WAKE);
     }
 
     logInfo("%ssleeping until interrupt on %s pin", deepsleep ? "deep" : "", deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str());
@@ -401,7 +403,7 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     } else {
         // configure XBEE_DIO7 pin as the pin that will wake the mDot from low power modes
         //      other pins can be confgured instead: XBEE_DIO2-6, XBEE_DI8, XBEE_DIN
-        dot->setWakePin(XBEE_DIO7);    
+        dot->setWakePin(XBEE_DIO7);
     }
 
     logInfo("%ssleeping until interrupt on %s pin", deepsleep ? "deep" : "", deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str());
@@ -426,7 +428,7 @@ void sleep_wake_interrupt_only(bool deepsleep) {
 	// configure GPIOs for lowest current
 	sleep_configure_io();
     }
-    
+
     // go to sleep/deepsleep and wake on rising edge of configured wake pin (only the WAKE pin in deepsleep)
     // since we're not waking on the RTC alarm, the interval is ignored
     dot->sleep(0, mDot::INTERRUPT, deepsleep);
@@ -452,7 +454,7 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
     } else {
         // configure WAKE pin (connected to S2 on xDot-DK) as the pin that will wake the xDot from low power modes
         //      other pins can be confgured instead: GPIO0-3 or UART_RX
-        dot->setWakePin(WAKE);    
+        dot->setWakePin(WAKE);
     }
 
     logInfo("%ssleeping %lus or until interrupt on %s pin", deepsleep ? "deep" : "", delay_s, deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str());
@@ -463,7 +465,7 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
     } else {
         // configure XBEE_DIO7 pin as the pin that will wake the mDot from low power modes
         //      other pins can be confgured instead: XBEE_DIO2-6, XBEE_DI8, XBEE_DIN
-        dot->setWakePin(XBEE_DIO7);    
+        dot->setWakePin(XBEE_DIO7);
     }
 
     logInfo("%ssleeping %lus or until interrupt on %s pin", deepsleep ? "deep" : "", delay_s, deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str());
@@ -488,7 +490,7 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
 	// configure GPIOs for lowest current
 	sleep_configure_io();
     }
-    
+
     // go to sleep/deepsleep and wake using the RTC alarm after delay_s seconds or rising edge of configured wake pin (only the WAKE pin in deepsleep)
     // whichever comes first will wake the xDot
     dot->sleep(delay_s, mDot::RTC_ALARM_OR_INTERRUPT, deepsleep);
@@ -614,23 +616,23 @@ void sleep_configure_io() {
     GPIO_InitTypeDef GPIO_InitStruct;
 
     // XBEE_DOUT, XBEE_DIN, XBEE_DO8, XBEE_RSSI, USBTX, USBRX, PA_12, PA_13, PA_14 & PA_15 to analog nopull
-    GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_6 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 
+    GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_6 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10
                 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);    
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // PB_0, PB_1, PB_3 & PB_4 to analog nopull
     GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_3 | GPIO_PIN_4;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct); 
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     // PC_9 & PC_13 to analog nopull
     GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_13;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct); 
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     // iterate through potential wake pins - leave the configured wake pin alone if one is needed
     // XBEE_DIN - PA3
@@ -641,7 +643,7 @@ void sleep_configure_io() {
     // XBEE_DIO6 - PA1
     // XBEE_DIO7 - PA0
     // XBEE_SLEEPRQ - PA11
-                
+
     if (dot->getWakePin() != XBEE_DIN || dot->getWakeMode() == mDot::RTC_ALARM) {
         GPIO_InitStruct.Pin = GPIO_PIN_3;
         GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
