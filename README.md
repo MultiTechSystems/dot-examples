@@ -9,7 +9,7 @@ $ mbed import http://os.mbed.com/teams/MultiTech/code/Dot-Examples/
 2. Change directory to the Dot-Examples/examples and import the dot library stack
 Choose either the stable or dev library for your dot device
 e.g. to get the latest development library for the xDot
-$ mbed add http://os.mbed.com/teams/MultiTech/code/libxDot-dev/
+$ mbed add https://github.com/MultiTechSystems/libxDot-dev
 
 3. Update mbed-os revision to match that of the dot library you just imported.
 This information can be found in the library's commit history.
