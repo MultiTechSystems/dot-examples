@@ -4,7 +4,7 @@ Example programs for MultiTech Dot devices demonstrating how to use the Dot devi
 ## Instructions for building Dot-Examples
 
 1. Import dot-examples
-$ mbed import http://os.mbed.com/teams/MultiTech/code/Dot-Examples/
+$ mbed import git@github.com:MultiTechSystems/dot-examples.git
 
 2. Change directory to the Dot-Examples/examples and import the dot library stack
 Choose either the stable or dev library for your dot device
