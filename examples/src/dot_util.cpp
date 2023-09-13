@@ -339,7 +339,7 @@ void join_network() {
                 ThisThread::sleep_for(std::chrono::seconds(delay_s));
             } else {
                 logInfo("sleeping %lu s until next free channel", delay_s);
-                dot->sleep(delay_s, mDot::RTC_ALARM, false);
+                dot->sleep(delay_s, mDot::RTC_ALARM, true);
             }
         }
     }
