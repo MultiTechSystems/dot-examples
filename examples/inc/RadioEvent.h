@@ -10,6 +10,11 @@ class RadioEvent : public mDotEvent
 {
 
 public:
+    bool joined = false;
+    bool testModeEnabled = false;
+    std::vector<uint8_t> _data;
+    uint32_t _testDownlinkCounter;
+
     RadioEvent() {}
 
     virtual ~RadioEvent() {}
@@ -17,11 +22,16 @@ public:
     virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int16_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, uint32_t fcnt, bool dupRx) {
         mDotEvent::PacketRx(port, payload, size, rssi, snr, ctrl, slot, retries, address, fcnt, dupRx);
 
-#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
         if(port == 200 || port == 201 || port == 202) {
             Fota::getInstance()->processCmd(payload, port, size);
         }
-#endif
+
+        if (testModeEnabled) {
+            if (AckReceived || (PacketReceived && (RxPort != 0 || RxPayloadSize == 0))) {
+                _testDownlinkCounter++;
+                logDebug("Incremented downlink cnt %d", _testDownlinkCounter);
+            }
+        }
     }
 
     /*!
@@ -76,23 +86,29 @@ public:
             logInfo("Rx %d bytes", info->RxBufferSize);
 
             if (info->RxBufferSize > 0) {
+                // Check for rejoin command from gateway
+                if (info->RxPort == 1 && info->RxBufferSize == 1 && info->RxBuffer[0] == 0xFF) {
+                    joined = false;
+                }
+
 #if ACTIVE_EXAMPLE != FOTA_EXAMPLE
                 // print RX data as string and hexadecimal
-                std::string rx((const char*)info->RxBuffer, info->RxBufferSize);
-                printf("Rx data: %s [%s]\r\n", rx.c_str(), mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
+                // std::string rx((const char*)info->RxBuffer, info->RxBufferSize);
+                // printf("Rx data: [%s]\r\n", mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
 #endif
             }
         }
     }
 
+#if ACTIVE_EXAMPLE == LCTT_EXAMPLE
+    void handleTestModePacket();
+#endif
 
-#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
     virtual void ServerTime(uint32_t seconds, uint8_t sub_seconds) {
         mDotEvent::ServerTime(seconds, sub_seconds);
 
         Fota::getInstance()->setClockOffset(seconds);
     }
-#endif
 };
 
 #endif

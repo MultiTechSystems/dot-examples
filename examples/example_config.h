@@ -8,10 +8,11 @@
 #define CLASS_C_EXAMPLE          5  // see class_c_example.cpp
 #define CLASS_B_EXAMPLE          6  // see class_b_example.cpp
 #define FOTA_EXAMPLE             7  // see fota_example.cpp
+#define LCTT_EXAMPLE             8  // see lctt_example.cpp
 
 // the active example is the one that will be compiled
 #if !defined(ACTIVE_EXAMPLE)
-#define ACTIVE_EXAMPLE  OTA_EXAMPLE
+#define ACTIVE_EXAMPLE  LCTT_EXAMPLE
 #endif
 
 // the active channel plan is the one that will be compiled
@@ -42,5 +43,8 @@
 //      CP_IN865
 //      CP_RU864
 
+#if !defined(CHANNEL_PLAN)
+#define CHANNEL_PLAN CP_US915
 #endif
 
+#endif

@@ -1,6 +1,7 @@
 {
     "macros": [
-        "FOTA"
+        "FOTA=1",
+        "CHANNEL_PLAN=CP_US915"
     ],
     "target_overrides": {
         "*": {
@@ -13,7 +14,7 @@
         "XDOT_L151CC": {
             "target.app_offset": "0x0D000",
             "target.bootloader_img": "bootloaders/xdot-boot.bin",
-            
+
             "target.components_add": ["SPIF", "DATAFLASH"],
             "spif-driver.SPI_MOSI": "SPI_MOSI",
             "spif-driver.SPI_MISO": "SPI_MISO",
