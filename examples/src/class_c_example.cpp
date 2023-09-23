@@ -1,6 +1,6 @@
 #include "dot_util.h"
 #include "RadioEvent.h"
- 
+
 #if ACTIVE_EXAMPLE == CLASS_C_EXAMPLE
 
 /////////////////////////////////////////////////////////////////////////////
@@ -9,10 +9,10 @@
 //     devices, the LoRa stack is not included. The libmDot library should //
 //     be imported if building for mDot devices. The libxDot library       //
 //     should be imported if building for xDot devices.                    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-mbed5/        //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-mbed5/        //
+// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev/          //
+// * https://developer.mbed.org/teams/MultiTech/code/libmDot/              //
+// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev/          //
+// * https://developer.mbed.org/teams/MultiTech/code/libxDot/              //
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////
@@ -76,6 +76,9 @@ int main() {
     // attach the custom events handler
     dot->setEvents(&events);
 
+    // Enable FOTA for multicast support
+    Fota::getInstance(dot);
+
     // update configuration if necessary
     if (dot->getJoinMode() != mDot::OTA) {
         logInfo("changing network join mode to OTA");
@@ -138,7 +141,7 @@ int main() {
 
         // put the LSL29011 ambient light sensor into a low power state
         lux.setMode(ISL29011::PWR_DOWN);
-#else 
+#else
         // get some dummy data and send it to the gateway
         light = lux.read_u16();
         tx_data.push_back((light >> 8) & 0xFF);
@@ -153,7 +156,7 @@ int main() {
         logInfo("waiting for 30s");
         ThisThread::sleep_for(30s);
     }
- 
+
     return 0;
 }
 

@@ -41,6 +41,8 @@ lora::ChannelPlan* create_channel_plan() {
     plan = new lora::ChannelPlan_AS923_Japan2();
 #elif CHANNEL_PLAN == CP_RU864
     plan = new lora::ChannelPlan_RU864();
+#elif CHANNEL_PLAN == CP_GLOBAL
+    plan = new lora::ChannelPlan_GLOBAL(GLOBAL_PLAN);
 #endif
 
     return plan;
@@ -367,19 +369,19 @@ void sleep_wake_rtc_only(bool deepsleep) {
     //   * sleep
     //   * restore IO configuration
     if (! deepsleep) {
-	// save the GPIO state.
-	sleep_save_io();
+        // save the GPIO state.
+        sleep_save_io();
 
-	// configure GPIOs for lowest current
-	sleep_configure_io();
+        // configure GPIOs for lowest current
+        sleep_configure_io();
     }
 
     // go to sleep/deepsleep for delay_s seconds and wake using the RTC alarm
     dot->sleep(delay_s, mDot::RTC_ALARM, deepsleep);
 
     if (! deepsleep) {
-	// restore the GPIO state.
-	sleep_restore_io();
+        // restore the GPIO state.
+        sleep_restore_io();
     }
 }
 
@@ -422,11 +424,11 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     //   * sleep
     //   * restore IO configuration
     if (! deepsleep) {
-	// save the GPIO state.
-	sleep_save_io();
+        // save the GPIO state.
+        sleep_save_io();
 
-	// configure GPIOs for lowest current
-	sleep_configure_io();
+        // configure GPIOs for lowest current
+        sleep_configure_io();
     }
 
     // go to sleep/deepsleep and wake on rising edge of configured wake pin (only the WAKE pin in deepsleep)
@@ -434,8 +436,8 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     dot->sleep(0, mDot::INTERRUPT, deepsleep);
 
     if (! deepsleep) {
-	// restore the GPIO state.
-	sleep_restore_io();
+        // restore the GPIO state.
+        sleep_restore_io();
     }
 }
 
@@ -484,11 +486,11 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
     //   * sleep
     //   * restore IO configuration
     if (! deepsleep) {
-	// save the GPIO state.
-	sleep_save_io();
+        // save the GPIO state.
+        sleep_save_io();
 
-	// configure GPIOs for lowest current
-	sleep_configure_io();
+        // configure GPIOs for lowest current
+        sleep_configure_io();
     }
 
     // go to sleep/deepsleep and wake using the RTC alarm after delay_s seconds or rising edge of configured wake pin (only the WAKE pin in deepsleep)
@@ -496,8 +498,8 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
     dot->sleep(delay_s, mDot::RTC_ALARM_OR_INTERRUPT, deepsleep);
 
     if (! deepsleep) {
-	// restore the GPIO state.
-	sleep_restore_io();
+        // restore the GPIO state.
+        sleep_restore_io();
     }
 }
 

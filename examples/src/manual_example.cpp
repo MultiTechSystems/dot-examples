@@ -1,6 +1,6 @@
 #include "dot_util.h"
 #include "RadioEvent.h"
- 
+
 #if ACTIVE_EXAMPLE == MANUAL_EXAMPLE
 
 /////////////////////////////////////////////////////////////////////////////
@@ -9,10 +9,10 @@
 //     devices, the LoRa stack is not included. The libmDot library should //
 //     be imported if building for mDot devices. The libxDot library       //
 //     should be imported if building for xDot devices.                    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-mbed5/        //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-mbed5/        //
+// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev/          //
+// * https://developer.mbed.org/teams/MultiTech/code/libmDot/              //
+// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev/          //
+// * https://developer.mbed.org/teams/MultiTech/code/libxDot/              //
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////
@@ -120,7 +120,7 @@ int main() {
         logInfo("restoring network session from NVM");
         dot->restoreNetworkSession();
     }
-    
+
     while (true) {
         uint16_t light;
         std::vector<uint8_t> tx_data;
@@ -140,7 +140,7 @@ int main() {
 
         // put the LSL29011 ambient light sensor into a low power state
         lux.setMode(ISL29011::PWR_DOWN);
-#else 
+#else
         // get some dummy data and send it to the gateway
         light = lux.read_u16();
         tx_data.push_back((light >> 8) & 0xFF);
@@ -161,7 +161,7 @@ int main() {
         //sleep_wake_interrupt_only(deep_sleep);
         sleep_wake_rtc_or_interrupt(deep_sleep);
     }
- 
+
     return 0;
 }
 

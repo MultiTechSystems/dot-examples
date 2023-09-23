@@ -1,6 +1,6 @@
 #include "dot_util.h"
 #include "RadioEvent.h"
- 
+
 #if ACTIVE_EXAMPLE == PEER_TO_PEER_EXAMPLE
 
 /////////////////////////////////////////////////////////////////////////////
@@ -69,6 +69,9 @@ int main() {
 
     // attach the custom events handler
     dot->setEvents(&events);
+
+    // Enable FOTA for multicast support
+    Fota::getInstance(dot);
 
     // update configuration if necessary
     if (dot->getJoinMode() != mDot::PEER_TO_PEER) {
@@ -169,7 +172,7 @@ int main() {
 
         // put the LSL29011 ambient light sensor into a low power state
         lux.setMode(ISL29011::PWR_DOWN);
-#else 
+#else
         // get some dummy data and send it to the gateway
         light = lux.read_u16();
         tx_data.push_back((light >> 8) & 0xFF);
@@ -184,7 +187,7 @@ int main() {
         logInfo("waiting for 5s");
         ThisThread::sleep_for(5s);
     }
- 
+
     return 0;
 }
 

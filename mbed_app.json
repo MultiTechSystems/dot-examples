@@ -1,7 +1,8 @@
 {
     "macros": [
         "FOTA=1",
-        "CHANNEL_PLAN=CP_US915"
+        "CHANNEL_PLAN=CP_GLOBAL",
+        "GLOBAL_PLAN=CP_US915"
     ],
     "target_overrides": {
         "*": {

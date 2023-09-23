@@ -18,10 +18,10 @@
 //     devices, the LoRa stack is not included. The libmDot library should //
 //     be imported if building for mDot devices. The libxDot library       //
 //     should be imported if building for xDot devices.                    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-mbed5/        //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-mbed5/        //
+// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev/          //
+// * https://developer.mbed.org/teams/MultiTech/code/libmDot/              //
+// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev/          //
+// * https://developer.mbed.org/teams/MultiTech/code/libxDot/              //
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -155,6 +155,9 @@ int main() {
 
     // attach the custom events handler
     dot->setEvents(&events);
+
+    // Enable FOTA for multicast support
+    Fota::getInstance(dot);
 
     // update configuration if necessary
     if (dot->getJoinMode() != mDot::OTA) {
