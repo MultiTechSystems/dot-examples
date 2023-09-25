@@ -376,8 +376,8 @@ int main() {
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
     dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
-    dot->setAdr(true);
     dot->setAck(0);
+    dot->setAdr(true);
     dot->setAppPort(224);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
