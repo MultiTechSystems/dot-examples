@@ -26,6 +26,12 @@
 //  "macros": [
 //     "FOTA",
 //     "CHANNEL_PLAN=CP_AS923_2"
+// ],
+// Or for global plan
+//  "macros": [
+//     "FOTA",
+//     "CHANNEL_PLAN=CP_GLOBAL"
+//     "GLOBAL_PLAN=CP_US915"
  // ],
 
 // options are :
