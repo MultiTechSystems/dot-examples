@@ -375,9 +375,9 @@ int main() {
     // dot->getSettings()->Test.DisableADRIncrementDatarate = true;
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
-
-    dot->setAck(0);
+    dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
     dot->setAdr(true);
+    dot->setAck(0);
     dot->setAppPort(224);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
