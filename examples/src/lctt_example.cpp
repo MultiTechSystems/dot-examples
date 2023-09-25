@@ -333,8 +333,7 @@ TEST_START:
 }
 
 
-int main() {
-    // Custom event handler for #if CHANNEL_PLAN == CP_GLOBAL
+#if CHANNEL_PLAN == CP_GLOBAL
     delete plan;
     plan = new lora::ChannelPlan_GLOBAL(dot->getDefaultFrequencyBand());
     dot->setChannelPlan(plan);
@@ -373,8 +372,8 @@ int main() {
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
     dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
-    dot->setAck(0);
     dot->setAdr(true);
+    dot->setAck(0);
     dot->setAppPort(224);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
