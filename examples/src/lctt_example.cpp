@@ -334,22 +334,23 @@ TEST_START:
 
 
 int main() {
-    // Custom event handler for #if CHANNEL_PLAN == CP_GLOBAL
-    delete plan;
-    plan = new lora::ChannelPlan_GLOBAL(dot->getDefaultFrequencyBand());
-    dot->setChannelPlan(plan);
+    // Custom event handler for automatically displaying RX data
+    RadioEvent events;
+
+    pc.baud(115200);
+
+#if defined(TARGET_XDOT_L151CC)
+    i2c.frequency(400000);
 #endif
 
-    // attach the custom events handler
-    dot->setEvents(&events);
+    mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
-    // Enable FOTA for multicast support
-    Fota::getInstance(dot);
+    // Create channel plan
+    plan = create_channel_plan();
+    assert(plan);
 
-    if (!dot->getStandbyFlag() && !do// After v4.2.0
-    dot->setDisableIncrementDR(true);
-// For libmDot < v4.2.0
-    // dot->getSettings()->Test.DisableADRIncrementDatarate = true;
+    dot = mDot::getInstance(plan);
+    assert(dot);
 
     // attach the custom events handler
     dot->setEvents(&events);
@@ -370,22 +371,18 @@ int main() {
     }
 
     dot->setTestModeEnabled(true);
+    dot->setDisableIncrementDR(true);
+    // dot->getSettings()->Test.DisableADRIncrementDatarate = true;
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
-    dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
+
     dot->setAck(0);
     dot->setAdr(true);
     dot->setAppPort(224);
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
-    //Run terminal session
-L);
-
-    //Run terminal session
-E_LEVEL);
-
-    //Run terminal session
+//Run terminal session
     while (true) {
         if (!events.testModeEnabled) {
             logDebug("NOT IN TESTMODE, run main thread");

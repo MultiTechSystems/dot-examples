@@ -42,28 +42,7 @@ lora::ChannelPlan* create_channel_plan() {
 #elif CHANNEL_PLAN == CP_RU864
     plan = new lora::ChannelPlan_RU864();
 #elif CHANNEL_PLAN == CP_GLOBAL
-    #if GLOBAL_PLAN == CP_US915
     plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::US915);
-    #elif GLOBAL_PLAN == CP_EU868
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::EU868);
-    #elif GLOBAL_PLAN == CP_AU915
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AU915);
-    #elif GLOBAL_PLAN == CP_AS923
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923);
-    #elif GLOBAL_PLAN == CP_AS923_2
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_2);
-    #elif GLOBAL_PLAN == CP_AS923_3
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_3);
-    #elif GLOBAL_PLAN == CP_AS923_4
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_4);
-    #elif GLOBAL_PLAN == CP_JAPAN
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_JAPAN);
-    #elif GLOBAL_PLAN == CP_JAPAN1
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_JAPAN1);
-    #elif GLOBAL_PLAN == CP_JAPAN2
-    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_JAPAN2);
-    #endif
-
 #endif
 
     return plan;
