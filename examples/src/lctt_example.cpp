@@ -371,8 +371,14 @@ int main() {
     }
 
     dot->setTestModeEnabled(true);
-    dot->setDisableIncrementDR(true);
-    // dot->getSettings()->Test.DisableADRIncrementDatarate = true;
+
+    // For library 4.2.x use setDisableIncrementDR
+    // dot->setDisableIncrementDR(true);
+
+    // For library 4.1.x use Test.DisableADRIncrementDatarate
+    dot->getSettings()->Test.DisableADRIncrementDatarate = true;
+
+
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
     dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
