@@ -381,6 +381,7 @@ int main() {
 
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
+    dot->setLinkCheckCount(0);
     dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
     dot->setAck(0);
     dot->setAdr(true);
