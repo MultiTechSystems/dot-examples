@@ -83,6 +83,8 @@ mbed::UnbufferedSerial pc(USBTX, USBRX);
 #if defined(TARGET_XDOT_L151CC)
 I2C i2c(I2C_SDA, I2C_SCL);
 ISL29011 lux(i2c);
+#elif defined(TARGET_XDOT_MAX32670)
+// no analog available
 #else
 AnalogIn lux(XBEE_AD0);
 #endif
@@ -221,6 +223,13 @@ int main() {
 
         // put the LSL29011 ambient light sensor into a low power state
         lux.setMode(ISL29011::PWR_DOWN);
+#elif defined(TARGET_XDOT_MAX32670)
+        // get some dummy data and send it to the gateway
+        light = rand();
+        tx_data.push_back((light >> 8) & 0xFF);
+        tx_data.push_back(light & 0xFF);
+        logInfo("light: %lu [0x%04X]", light, light);
+        send_data(tx_data);
 #else
         // get some dummy data and send it to the gateway
         light = lux.read_u16();

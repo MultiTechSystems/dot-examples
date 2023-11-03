@@ -637,7 +637,7 @@ void sleep_configure_io() {
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
 #elif defined(TARGET_XDOT_MAX32670)
-    LowPower::configExtGpios(_dot->getWakeMode(), _dot->getWakePin());
+    LowPower::configExtGpios(dot->getWakeMode(), dot->getWakePin());
 #else
     /* GPIO Ports Clock Enable */
     __GPIOA_CLK_ENABLE();

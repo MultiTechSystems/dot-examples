@@ -43,6 +43,8 @@ mbed::UnbufferedSerial pc(USBTX, USBRX);
 #if defined(TARGET_XDOT_L151CC)
 I2C i2c(I2C_SDA, I2C_SCL);
 ISL29011 lux(i2c);
+#elif defined(TARGET_XDOT_MAX32670)
+// no analog available
 #else
 AnalogIn lux(XBEE_AD0);
 #endif
