@@ -191,6 +191,18 @@ Compile the AUTO_OTA_EXAMPLE and use the EU868 channel plan instead.
 ## Dot Libraries
 Stable and development libraries are available for both mDot and xDot platforms. The library chosen must match the target platform. Compiling for the mDot platform with the xDot library or vice versa will not succeed.
 
+### xDot Advanced Library
+#### Development library for xDot Advanced
+Bleeding edge development version of the xDot library for mbed 6. This version of the library is not guaranteed to be stable or well tested and should not be used in production or deployment scenarios.
+
+mbed add [https://github.com/MultiTechSystems/libxDotAD-dev](https://github.com/MultiTechSystems/libxDotAD-dev)
+
+#### Stable library for xDot Advanced
+
+Stable version of the xDot library for mbed 6. This version of the library is suitable for deployment scenarios.
+
+mbed add [https://github.com/MultiTechSystems/libxDotAD](https://github.com/MultiTechSystems/libxDotAD)
+
 ### mDot Library
 #### Development library for mDot
 
