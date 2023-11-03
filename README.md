@@ -25,6 +25,14 @@ Make sure the network_name, network_passphrase, frequency_sub_band (US), public_
 
 ### Compiler Versions
 
+#### xDot Advanced
+* mbed-os-6.18.0 (use latest until new tag is available)
+* [Arm Compiler](https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/version-6) version 6.17 or newer
+* [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) version 10 2021.07 or newer
+
+#### mDot and xDot
+
+* mbed-os-6.8.0
 * [Arm Compiler](https://developer.arm.com/tools-and-software/embedded/arm-compiler/downloads/version-6) version 6.11 or newer
 * [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) version 9 2019-q4-major or newer
 
