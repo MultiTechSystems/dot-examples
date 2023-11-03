@@ -364,13 +364,16 @@ int main() {
         }
     }
 
+
+    dot->setClass("A");
+
     dot->setTestModeEnabled(true);
 
     // For library 4.2.x use setDisableIncrementDR
-    // dot->setDisableIncrementDR(true);
+    dot->setDisableIncrementDR(true);
 
     // For library 4.1.x use Test.DisableADRIncrementDatarate
-    dot->getSettings()->Test.DisableADRIncrementDatarate = true;
+    // dot->getSettings()->Test.DisableADRIncrementDatarate = true;
 
 
     dot->setJoinNonceValidation(true);
