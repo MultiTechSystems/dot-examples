@@ -531,6 +531,8 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
 void sleep_save_io() {
 #if defined(TARGET_XDOT_L151CC)
 	xdot_save_gpio_state();
+#elif defined(TARGET_XDOT_MAX32670)
+    // saved by sleep
 #else
 	portA[0] = GPIOA->MODER;
 	portA[1] = GPIOA->OTYPER;
@@ -634,6 +636,8 @@ void sleep_configure_io() {
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
+#elif defined(TARGET_XDOT_MAX32670)
+    LowPower::configExtGpios(_dot->getWakeMode(), _dot->getWakePin());
 #else
     /* GPIO Ports Clock Enable */
     __GPIOA_CLK_ENABLE();
@@ -732,6 +736,8 @@ void sleep_configure_io() {
 void sleep_restore_io() {
 #if defined(TARGET_XDOT_L151CC)
     xdot_restore_gpio_state();
+#elif defined(TARGET_XDOT_MAX32670)
+    // restored by sleep
 #else
     GPIOA->MODER = portA[0];
     GPIOA->OTYPER = portA[1];
