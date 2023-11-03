@@ -44,12 +44,6 @@ lora::ChannelPlan* plan = NULL;
 
 mbed::UnbufferedSerial pc(USBTX, USBRX);
 
-#if defined(TARGET_XDOT_L151CC)
-I2C i2c(I2C_SDA, I2C_SCL);
-ISL29011 lux(i2c);
-#else
-AnalogIn lux(XBEE_AD0);
-#endif
 
 void RadioEvent::handleTestModePacket()
  {
@@ -386,6 +380,9 @@ int main() {
     dot->setAck(0);
     dot->setAdr(true);
     dot->setAppPort(224);
+
+    // display configuration
+    display_config();
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 

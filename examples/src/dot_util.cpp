@@ -1,6 +1,9 @@
 #include "dot_util.h"
+
 #if defined(TARGET_XDOT_L151CC)
 #include "xdot_low_power.h"
+#elif defined(TARGET_XDOT_MAX32670)
+#include "LowPower.h"
 #endif
 
 #if defined(TARGET_MTS_MDOT_F411RE)
@@ -42,7 +45,29 @@ lora::ChannelPlan* create_channel_plan() {
 #elif CHANNEL_PLAN == CP_RU864
     plan = new lora::ChannelPlan_RU864();
 #elif CHANNEL_PLAN == CP_GLOBAL
+    #if GLOBAL_PLAN == CP_US915
     plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::US915);
+    #elif GLOBAL_PLAN == CP_EU868
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::EU868);
+    #elif GLOBAL_PLAN == CP_AU915
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AU915);
+    #elif GLOBAL_PLAN == CP_AS923
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923);
+    #elif GLOBAL_PLAN == CP_AS923_2
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_2);
+    #elif GLOBAL_PLAN == CP_AS923_3
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_3);
+    #elif GLOBAL_PLAN == CP_AS923_4
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_4);
+    #elif GLOBAL_PLAN == CP_AS923_JAPAN
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::AS923_JAPAN);
+    #elif GLOBAL_PLAN == CP_KR920
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::KR920);
+    #elif GLOBAL_PLAN == CP_IN865
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::IN865);
+    #elif GLOBAL_PLAN == CP_RU864
+    plan = new lora::ChannelPlan_GLOBAL(lora::ChannelPlan::RU864);
+    #endif
 #endif
 
     return plan;
@@ -386,7 +411,7 @@ void sleep_wake_rtc_only(bool deepsleep) {
 }
 
 void sleep_wake_interrupt_only(bool deepsleep) {
-#if defined (TARGET_XDOT_L151CC)
+#if defined (TARGET_XDOT_L151CC) || defined(TARGET_XDOT_MAX32670)
     if (deepsleep) {
         // for xDot, WAKE pin (connected to S2 on xDot-DK) is the only pin that can wake the processor from deepsleep
         // it is automatically configured when INTERRUPT or RTC_ALARM_OR_INTERRUPT is the wakeup source and deepsleep is true in the mDot::sleep call
@@ -449,7 +474,7 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
         delay_s = 10;
     }
 
-#if defined (TARGET_XDOT_L151CC)
+#if defined (TARGET_XDOT_L151CC) || defined(TARGET_XDOT_MAX32670)
     if (deepsleep) {
         // for xDot, WAKE pin (connected to S2 on xDot-DK) is the only pin that can wake the processor from deepsleep
         // it is automatically configured when INTERRUPT or RTC_ALARM_OR_INTERRUPT is the wakeup source and deepsleep is true in the mDot::sleep call
