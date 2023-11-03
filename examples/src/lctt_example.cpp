@@ -326,6 +326,52 @@ TEST_START:
     }
 }
 
+#if defined(TARGET_MTS_MDOT_F411RE) // -----------------------------------------------------------
+
+#define AT_TX_PIN   XBEE_DOUT
+#define AT_RX_PIN   XBEE_DIN
+#define AT_RTS_PIN  XBEE_RTS
+#define AT_CTS_PIN  XBEE_CTS
+
+#define DEBUG_TX    USBTX
+#define DEBUG_RX    USBRX
+
+#elif defined(TARGET_XDOT_L151CC) // -----------------------------------------------------------
+
+#define AT_TX_PIN   UART1_TX
+#define AT_RX_PIN   UART1_RX
+#define AT_RTS_PIN  UART1_RTS
+#define AT_CTS_PIN  UART1_CTS
+
+#define DEBUG_TX    USBTX
+#define DEBUG_RX    USBRX
+
+#elif defined(TARGET_XDOT_MAX32670) // -----------------------------------------------------------
+
+#define AT_TX_PIN   UART0_TX // UART0A_TX - P0_9
+#define AT_RX_PIN   UART0_RX // UART0A_RX - P0_8
+#define AT_RTS_PIN  UART0_RTS
+#define AT_CTS_PIN  UART0_CTS
+
+#define DEBUG_TX    UART1_TX // UART1A_TX - P0_29
+#define DEBUG_RX    UART1_RX // UART1A_RX - P0_28
+
+#include "pwrseq_regs.h"
+#include "lp.h"
+
+#else // -----------------------------------------------------------------------------------------
+#error Unsupported target
+#endif
+
+#define LOG_DEFAULT_BAUD_RATE 115200
+
+mbed::UnbufferedSerial debug_port(DEBUG_TX, DEBUG_RX, LOG_DEFAULT_BAUD_RATE);
+
+FileHandle *mbed::mbed_override_console(int fd)
+{
+    return &debug_port;
+}
+
 
 int main() {
     // Custom event handler for automatically displaying RX data
@@ -351,6 +397,8 @@ int main() {
 
     // Enable FOTA for multicast support
     Fota::getInstance(dot);
+
+    mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
     if (!dot->getStandbyFlag() && !dot->getPreserveSession()) {
 
