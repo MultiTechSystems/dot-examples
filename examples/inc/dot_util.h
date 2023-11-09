@@ -27,11 +27,7 @@ void update_network_link_check_config(uint8_t link_check_count, uint8_t link_che
 
 void join_network();
 
-void sleep_wake_rtc_only(bool deepsleep);
-
-void sleep_wake_interrupt_only(bool deepsleep);
-
-void sleep_wake_rtc_or_interrupt(bool deepsleep);
+void dot_sleep();
 
 void sleep_save_io();
 

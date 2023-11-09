@@ -6,6 +6,10 @@
 #include "LowPower.h"
 #endif
 
+void sleep_wake_rtc_only(bool deepsleep);
+void sleep_wake_interrupt_only(bool deepsleep);
+void sleep_wake_rtc_or_interrupt(bool deepsleep);
+
 #if defined(TARGET_MTS_MDOT_F411RE)
 uint32_t portA[6];
 uint32_t portB[6];
@@ -372,6 +376,17 @@ void join_network() {
     }
 }
 
+void dot_sleep(){
+    if(cfg::wake_mode == cfg::interval)
+        sleep_wake_rtc_only(cfg::deep_sleep);
+    else if(cfg::wake_mode == cfg::interrupt)
+        sleep_wake_interrupt_only(cfg::deep_sleep);
+    else if(cfg::wake_mode == cfg::interval_or_interrupt)
+        sleep_wake_rtc_or_interrupt(cfg::deep_sleep);
+    else
+        logError("Invalid wake mode %d", cfg::wake_mode);
+}
+
 void sleep_wake_rtc_only(bool deepsleep) {
     // in some frequency bands we need to wait until another channel is available before transmitting again
     // wait at least 10s between transmissions
@@ -383,9 +398,10 @@ void sleep_wake_rtc_only(bool deepsleep) {
     logInfo("%ssleeping %lus", deepsleep ? "deep" : "", delay_s);
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
 
-    // lowest current consumption in sleep mode can only be achieved by configuring IOs as analog inputs with no pull resistors
-    // the library handles all internal IOs automatically, but the external IOs are the application's responsibility
-    // certain IOs may require internal pullup or pulldown resistors because leaving them floating would cause extra current consumption
+    // SLEEP MODE
+    // Lowest current consumption in sleep mode can only be achieved by properly configuring all IOs. The library handles
+    // all internal IOs automatically, but the external IOs are the application's responsibility. Certain IOs may
+    // require internal pullup or pulldown resistors because leaving them floating would cause extra current consumption.
     // for xDot: UART_*, I2C_*, SPI_*, GPIO*, WAKE
     // for mDot: XBEE_*, USBTX, USBRX, PB_0, PB_1
     // steps are:
@@ -393,13 +409,27 @@ void sleep_wake_rtc_only(bool deepsleep) {
     //   * configure IOs to reduce current consumption
     //   * sleep
     //   * restore IO configuration
+    // DEEP SLEEP MODE
+    // mDot: stop mode is used and both internal and external pins are automatically configured for low power by the dot
+    // library code. Use sleep not deep sleep or external pull resistors if if external circuitry needs a specific state
+    // for lowest power consumption.
+    // xDot_L151CC: standby mode is used. So most pins are high impedance. See the reference manual for details. Use sleep
+    // not deep sleep or external pull resistors if if external circuitry needs a specific state for lowest power consumption.
+    // xDot_MAX32670: back up mode is used. So, the library code only configures internal pins leaving the external
+    // pins to be configured by the user.
     if (! deepsleep) {
         // save the GPIO state.
         sleep_save_io();
 
-        // configure GPIOs for lowest current
+#if defined (TARGET_XDOT_L151CC) || defined(TARGET_MTS_MDOT_F411RE)
+        // configure GPIOs for lowest current if not deepsleep.
         sleep_configure_io();
     }
+#elif defined (TARGET_XDOT_MAX32670)
+    }
+    // configure GPIOs for lowest current regardless of sleep mode.
+    sleep_configure_io();
+#endif
 
     // go to sleep/deepsleep for delay_s seconds and wake using the RTC alarm
     dot->sleep(delay_s, mDot::RTC_ALARM, deepsleep);
@@ -411,36 +441,23 @@ void sleep_wake_rtc_only(bool deepsleep) {
 }
 
 void sleep_wake_interrupt_only(bool deepsleep) {
-#if defined (TARGET_XDOT_L151CC) || defined(TARGET_XDOT_MAX32670)
-    if (deepsleep) {
-        // for xDot, WAKE pin (connected to S2 on xDot-DK) is the only pin that can wake the processor from deepsleep
-        // it is automatically configured when INTERRUPT or RTC_ALARM_OR_INTERRUPT is the wakeup source and deepsleep is true in the mDot::sleep call
-    } else {
-        // configure WAKE pin (connected to S2 on xDot-DK) as the pin that will wake the xDot from low power modes
-        //      other pins can be confgured instead: GPIO0-3 or UART_RX
-        dot->setWakePin(WAKE);
-    }
-
+    dot->setWakePinMode(cfg::wake_pin_mode);
+    dot->setWakePinTrigger(cfg::wake_pin_trigger);
+    dot->setWakePin(dot->pinNum2Name(cfg::wake_pin));
+#if defined (TARGET_XDOT_L151CC)
     logInfo("%ssleeping until interrupt on %s pin", deepsleep ? "deep" : "", deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str());
-#else
-
-    if (deepsleep) {
-        // for mDot, XBEE_DIO7 pin is the only pin that can wake the processor from deepsleep
-        // it is automatically configured when INTERRUPT or RTC_ALARM_OR_INTERRUPT is the wakeup source and deepsleep is true in the mDot::sleep call
-    } else {
-        // configure XBEE_DIO7 pin as the pin that will wake the mDot from low power modes
-        //      other pins can be confgured instead: XBEE_DIO2-6, XBEE_DI8, XBEE_DIN
-        dot->setWakePin(XBEE_DIO7);
-    }
-
+#elif defined (TARGET_MTS_MDOT_F411RE)
     logInfo("%ssleeping until interrupt on %s pin", deepsleep ? "deep" : "", deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str());
+#elif defined(TARGET_XDOT_MAX32670)
+    logInfo("%ssleeping until interrupt on %s pin", deepsleep ? "deep" : "", mDot::pinName2Str(dot->getWakePin()).c_str());
 #endif
 
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
 
-    // lowest current consumption in sleep mode can only be achieved by configuring IOs as analog inputs with no pull resistors
-    // the library handles all internal IOs automatically, but the external IOs are the application's responsibility
-    // certain IOs may require internal pullup or pulldown resistors because leaving them floating would cause extra current consumption
+    // SLEEP MODE
+    // Lowest current consumption in sleep mode can only be achieved by properly configuring all IOs. The library handles
+    // all internal IOs automatically, but the external IOs are the application's responsibility. Certain IOs may
+    // require internal pullup or pulldown resistors because leaving them floating would cause extra current consumption.
     // for xDot: UART_*, I2C_*, SPI_*, GPIO*, WAKE
     // for mDot: XBEE_*, USBTX, USBRX, PB_0, PB_1
     // steps are:
@@ -448,13 +465,27 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     //   * configure IOs to reduce current consumption
     //   * sleep
     //   * restore IO configuration
+    // DEEP SLEEP MODE
+    // mDot: stop mode is used and both internal and external pins are automatically configured for low power by the dot
+    // library code. Use sleep not deep sleep or external pull resistors if if external circuitry needs a specific state
+    // for lowest power consumption.
+    // xDot_L151CC: standby mode is used. So most pins are high impedance. See the reference manual for details. Use sleep
+    // not deep sleep or external pull resistors if if external circuitry needs a specific state for lowest power consumption.
+    // xDot_MAX32670: back up mode is used. So, the library code only configures internal pins leaving the external
+    // pins to be configured by the user.
     if (! deepsleep) {
         // save the GPIO state.
         sleep_save_io();
 
-        // configure GPIOs for lowest current
+#if defined (TARGET_XDOT_L151CC) || defined(TARGET_MTS_MDOT_F411RE)
+        // configure GPIOs for lowest current if not deepsleep.
         sleep_configure_io();
     }
+#elif defined (TARGET_XDOT_MAX32670)
+    }
+    // configure GPIOs for lowest current regardless of sleep mode.
+    sleep_configure_io();
+#endif
 
     // go to sleep/deepsleep and wake on rising edge of configured wake pin (only the WAKE pin in deepsleep)
     // since we're not waking on the RTC alarm, the interval is ignored
@@ -474,35 +505,21 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
         delay_s = 10;
     }
 
-#if defined (TARGET_XDOT_L151CC) || defined(TARGET_XDOT_MAX32670)
-    if (deepsleep) {
-        // for xDot, WAKE pin (connected to S2 on xDot-DK) is the only pin that can wake the processor from deepsleep
-        // it is automatically configured when INTERRUPT or RTC_ALARM_OR_INTERRUPT is the wakeup source and deepsleep is true in the mDot::sleep call
-    } else {
-        // configure WAKE pin (connected to S2 on xDot-DK) as the pin that will wake the xDot from low power modes
-        //      other pins can be confgured instead: GPIO0-3 or UART_RX
-        dot->setWakePin(WAKE);
-    }
-
-    logInfo("%ssleeping %lus or until interrupt on %s pin", deepsleep ? "deep" : "", delay_s, deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str());
-#else
-    if (deepsleep) {
-        // for mDot, XBEE_DIO7 pin is the only pin that can wake the processor from deepsleep
-        // it is automatically configured when INTERRUPT or RTC_ALARM_OR_INTERRUPT is the wakeup source and deepsleep is true in the mDot::sleep call
-    } else {
-        // configure XBEE_DIO7 pin as the pin that will wake the mDot from low power modes
-        //      other pins can be confgured instead: XBEE_DIO2-6, XBEE_DI8, XBEE_DIN
-        dot->setWakePin(XBEE_DIO7);
-    }
-
-    logInfo("%ssleeping %lus or until interrupt on %s pin", deepsleep ? "deep" : "", delay_s, deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str());
+    dot->setWakePin(dot->pinNum2Name(cfg::wake_pin));
+#if defined (TARGET_XDOT_L151CC)
+    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str(), delay_s);
+#elif defined (TARGET_MTS_MDOT_F411RE)
+    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str(), delay_s);
+#elif defined(TARGET_XDOT_MAX32670)
+    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", mDot::pinName2Str(dot->getWakePin()).c_str(), delay_s);
 #endif
 
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
 
-    // lowest current consumption in sleep mode can only be achieved by configuring IOs as analog inputs with no pull resistors
-    // the library handles all internal IOs automatically, but the external IOs are the application's responsibility
-    // certain IOs may require internal pullup or pulldown resistors because leaving them floating would cause extra current consumption
+    // SLEEP MODE
+    // Lowest current consumption in sleep mode can only be achieved by properly configuring all IOs. The library handles
+    // all internal IOs automatically, but the external IOs are the application's responsibility. Certain IOs may
+    // require internal pullup or pulldown resistors because leaving them floating would cause extra current consumption.
     // for xDot: UART_*, I2C_*, SPI_*, GPIO*, WAKE
     // for mDot: XBEE_*, USBTX, USBRX, PB_0, PB_1
     // steps are:
@@ -510,13 +527,27 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
     //   * configure IOs to reduce current consumption
     //   * sleep
     //   * restore IO configuration
+    // DEEP SLEEP MODE
+    // mDot: stop mode is used and both internal and external pins are automatically configured for low power by the dot
+    // library code. Use sleep not deep sleep or external pull resistors if if external circuitry needs a specific state
+    // for lowest power consumption.
+    // xDot_L151CC: standby mode is used. So most pins are high impedance. See the reference manual for details. Use sleep
+    // not deep sleep or external pull resistors if if external circuitry needs a specific state for lowest power consumption.
+    // xDot_MAX32670: back up mode is used. So, the library code only configures internal pins leaving the external
+    // pins to be configured by the user.
     if (! deepsleep) {
         // save the GPIO state.
         sleep_save_io();
 
-        // configure GPIOs for lowest current
+#if defined (TARGET_XDOT_L151CC) || defined(TARGET_MTS_MDOT_F411RE)
+        // configure GPIOs for lowest current if not deepsleep.
         sleep_configure_io();
     }
+#elif defined (TARGET_XDOT_MAX32670)
+    }
+    // configure GPIOs for lowest current regardless of sleep mode.
+    sleep_configure_io();
+#endif
 
     // go to sleep/deepsleep and wake using the RTC alarm after delay_s seconds or rising edge of configured wake pin (only the WAKE pin in deepsleep)
     // whichever comes first will wake the xDot
@@ -788,4 +819,3 @@ int send_data(std::vector<uint8_t> data) {
 
     return ret;
 }
-
