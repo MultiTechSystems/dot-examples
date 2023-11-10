@@ -3,35 +3,6 @@
 
 #if ACTIVE_EXAMPLE == CLASS_B_EXAMPLE
 
-/////////////////////////////////////////////////////////////////////////////
-// -------------------- DOT LIBRARY REQUIRED ------------------------------//
-// * Because these example programs can be used for both mDot and xDot     //
-//     devices, the LoRa stack is not included. The libmDot library should //
-//     be imported if building for mDot devices. The libxDot library       //
-//     should be imported if building for xDot devices.                    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev/          //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot/              //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev/          //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot/              //
-/////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////
-// * these options must match the settings on your gateway //
-// * edit their values to match your configuration         //
-// * frequency sub band is only relevant for the 915 bands //
-// * either the network name and passphrase can be used or //
-//     the network ID (8 bytes) and KEY (16 bytes)         //
-/////////////////////////////////////////////////////////////
-static std::string network_name = "MultiTech";
-static std::string network_passphrase = "MultiTech";
-static uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
-static uint8_t network_key[] = { 0x1F, 0x33, 0xA1, 0x70, 0xA5, 0xF1, 0xFD, 0xA0, 0xAB, 0x69, 0x7A, 0xAE, 0x2B, 0x95, 0x91, 0x6B };
-static uint8_t frequency_sub_band = 1;
-static lora::NetworkType public_network = lora::PUBLIC_LORAWAN;
-static uint8_t join_delay = 5;
-static uint8_t ack = 3;
-static bool adr = true;
-
 // Number of ping slots to open per beacon interval - see mDot.h
 static uint8_t ping_periodicity = 4;
 
@@ -39,15 +10,6 @@ mDot* dot = NULL;
 lora::ChannelPlan* plan = NULL;
 
 mbed::UnbufferedSerial pc(USBTX, USBRX);
-
-#if defined(TARGET_XDOT_L151CC)
-I2C i2c(I2C_SDA, I2C_SCL);
-ISL29011 lux(i2c);
-#elif defined(TARGET_XDOT_MAX32670)
-// no analog available
-#else
-AnalogIn lux(XBEE_AD0);
-#endif
 
 int main() {
     // Custom event handler for automatically displaying RX data
@@ -95,14 +57,17 @@ int main() {
     // only one method or the other should be used!
     // network ID = crc64(network name)
     // network KEY = cmac(network passphrase)
-    update_ota_config_name_phrase(network_name, network_passphrase, frequency_sub_band, public_network, ack);
-    //update_ota_config_id_key(network_id, network_key, frequency_sub_band, public_network, ack);
+#if defined(DERIVE_FROM_TEXT)
+    update_ota_config_name_phrase(cfg::network_name, cfg::network_passphrase, cfg::frequency_sub_band, cfg::network_type, cfg::ack);
+#else
+    update_ota_config_id_key(cfg::network_id, cfg::network_key, cfg::frequency_sub_band, cfg::network_type, cfg::ack);
+#endif
 
     // enable or disable Adaptive Data Rate
-    dot->setAdr(adr);
+    dot->setAdr(cfg::adr);
 
     // Configure the join delay
-    dot->setJoinDelay(join_delay);
+    dot->setJoinDelay(cfg::join_delay);
 
     // Configure the class B ping periodicity
     dot->setPingPeriodicity(ping_periodicity);
@@ -137,7 +102,6 @@ int main() {
     bcn_timer.start();
 
     while (true) {
-        std::vector<uint8_t> tx_data;
         static bool send_uplink = true;
 
         // Check if we locked the beacon yet and send an uplink to notify the network server
@@ -157,7 +121,7 @@ int main() {
                 ThisThread::sleep_for(10ms);
             }
 
-            if (send_data(tx_data) != mDot::MDOT_OK) {
+            if (send_data() != mDot::MDOT_OK) {
                 logError("Failed to inform the network server we are in class B");
                 logInfo("Reset the MCU to try again");
                 return 0;

@@ -8,43 +8,31 @@ lora::ChannelPlan* plan = NULL;
 
 mbed::UnbufferedSerial pc(USBTX, USBRX);
 
-#if defined(TARGET_XDOT_L151CC)
-I2C i2c(I2C_SDA, I2C_SCL);
-ISL29011 lux(i2c);
-#elif defined(TARGET_XDOT_MAX32670)
-// no analog available
-#else
-AnalogIn lux(XBEE_AD0);
-#endif
-
 int main() {
     // Custom event handler for automatically displaying RX data
     RadioEvent events;
 
     pc.baud(115200);
 
-    printf("Starting ota_example\r\n");
 #if defined(TARGET_XDOT_L151CC)
     i2c.frequency(400000);
 #endif
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
-    printf("log level set\n");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);
-    printf("channel plan created\r\n");
-    while(1);
+
     dot = mDot::getInstance(plan);
     assert(dot);
-    printf("got dot instance\r\n");
-//    while(1);
+
     // attach the custom events handler
     dot->setEvents(&events);
-    printf("set events\r\n");
+
     // Enable FOTA for multicast support
     Fota::getInstance(dot);
-    printf("fota\r\n");
+
     if (!dot->getStandbyFlag() && !dot->getPreserveSession()) {
         logInfo("mbed-os library version: %d.%d.%d", MBED_MAJOR_VERSION, MBED_MINOR_VERSION, MBED_PATCH_VERSION);
 
@@ -106,45 +94,13 @@ int main() {
     }
 
     while (true) {
-        uint16_t light;
-        std::vector<uint8_t> tx_data;
-
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-#if defined(TARGET_XDOT_L151CC)
-        // configure the ISL29011 sensor on the xDot-DK for continuous ambient light sampling, 16 bit conversion, and maximum range
-        lux.setMode(ISL29011::ALS_CONT);
-        lux.setResolution(ISL29011::ADC_16BIT);
-        lux.setRange(ISL29011::RNG_64000);
-
-        // get the latest light sample and send it to the gateway
-        light = lux.getData();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
-
-        // put the LSL29011 ambient light sensor into a low power state
-        lux.setMode(ISL29011::PWR_DOWN);
-#elif defined(TARGET_XDOT_MAX32670)
-        // get some dummy data and send it to the gateway
-        light = rand();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
-#else
-        // get some dummy data and send it to the gateway
-        light = lux.read_u16();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
-#endif
-
+        send_data();
+        
         // if going into deepsleep mode, save the session so we don't need to join again after waking up
         // not necessary if going into sleep mode since RAM is retained
         if (cfg::deep_sleep) {
@@ -154,6 +110,7 @@ int main() {
 
         dot_sleep();
     }
+
     return 0;
 }
 

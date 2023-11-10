@@ -41,9 +41,12 @@
 //        files and lists the GCC_ARM and ARMC6 compiler versions.         //
 /////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////
-// * Choose which example to build.                       //
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+// * Choose which example to build. This can be done on the            //
+//   command line when compiling the example or selected below.        //
+//   -- command line example --                                        //
+// mbed compile -t ARMC6 -m XDOT_MAX32670 -DACTIVE_EXAMPLE=OTA_EXAMPLE //
+/////////////////////////////////////////////////////////////////////////
 #define OTA_EXAMPLE              1  // see ota_example.cpp
 #define AUTO_OTA_EXAMPLE         2  // see auto_ota_example.cpp
 #define MANUAL_EXAMPLE           3  // see manual_example.cpp
@@ -54,8 +57,7 @@
 #define LCTT_EXAMPLE             8  // see lctt_example.cpp
 
 #if !defined(ACTIVE_EXAMPLE)
-// Choose one of the examples above here.
-#define ACTIVE_EXAMPLE  OTA_EXAMPLE
+#define ACTIVE_EXAMPLE  LCTT_EXAMPLE
 #endif
 
 namespace cfg {
@@ -67,7 +69,7 @@ namespace cfg {
 // * Configure either the network name and passphrase or   //
 //     the network ID (8 bytes) and KEY (16 bytes)         //
 /////////////////////////////////////////////////////////////
-#if (ACTIVE_EXAMPLE == MANUAL_EXAMPLE) || (ACTIVE_EXAMPLE == PEER_TO_PEER_EXAMPLE)
+#if (ACTIVE_EXAMPLE == MANUAL_EXAMPLE || ACTIVE_EXAMPLE == PEER_TO_PEER_EXAMPLE)
 const uint8_t network_address[] = { 0x01, 0x02, 0x03, 0x04 };
 const uint8_t network_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04 };
 const uint8_t data_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04 };
@@ -85,7 +87,7 @@ const uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
 // AppKey
 const uint8_t network_key[] = { 0x1F, 0x33, 0xA1, 0x70, 0xA5, 0xF1, 0xFD, 0xA0, 0xAB, 0x69, 0x7A, 0xAE, 0x2B, 0x95, 0x91, 0x6B };
 #endif // defined(DERIVE_FROM_TEXT)
-#endif // (ACTIVE_EXAMPLE == MANUAL_EXAMPLE) || (ACTIVE_EXAMPLE == PEER_TO_PEER_EXAMPLE)
+#endif // (ACTIVE_EXAMPLE == MANUAL_EXAMPLE || ACTIVE_EXAMPLE == PEER_TO_PEER_EXAMPLE)
 const uint8_t frequency_sub_band = 1;
 const lora::NetworkType network_type = lora::PUBLIC_LORAWAN;
 const uint8_t join_delay = 5;
@@ -194,6 +196,9 @@ const uint8_t wake_pin_trigger = RISE;
 //      CP_IN865                                                //
 //      CP_RU864                                                //
 //////////////////////////////////////////////////////////////////
+
+// This default is only used if the channel plan is not defined in
+//   mbed_app.json or on the command line during compilation.
 #if !defined(CHANNEL_PLAN)
 #define CHANNEL_PLAN CP_US915
 #endif

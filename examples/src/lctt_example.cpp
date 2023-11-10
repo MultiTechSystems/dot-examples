@@ -4,41 +4,6 @@
 
 #if ACTIVE_EXAMPLE == LCTT_EXAMPLE
 
-/////////////////////////////////////////////////////////////////////////////
-// -------------------- DOT LIBRARY REQUIRED ------------------------------//
-// * Because these example programs can be used for both mDot and xDot     //
-//     devices, the LoRa stack is not included. The libmDot library should //
-//     be imported if building for mDot devices. The libxDot library       //
-//     should be imported if building for xDot devices.                    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev/          //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot/              //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev/          //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot/              //
-/////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////
-// * these options must match the settings on your gateway //
-// * edit their values to match your configuration         //
-// * frequency sub band is only relevant for the 915 bands //
-// * either the network name and passphrase can be used or //
-//     the network ID (8 bytes) and KEY (16 bytes)         //
-/////////////////////////////////////////////////////////////
-static std::string network_name = "MultiTech";
-static std::string network_passphrase = "MultiTech";
-static uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
-static uint8_t network_key[] = { 0x1F, 0x33, 0xA1, 0x70, 0xA5, 0xF1, 0xFD, 0xA0, 0xAB, 0x69, 0x7A, 0xAE, 0x2B, 0x95, 0x91, 0x6B };
-static uint8_t frequency_sub_band = 1;
-static lora::NetworkType network_type = lora::PUBLIC_LORAWAN;
-static uint8_t join_delay = 5;
-static uint8_t ack = 0;
-static bool adr = true;
-
-// deepsleep consumes slightly less current than sleep
-// in sleep mode, IO state is maintained, RAM is retained, and application will resume after waking up
-// in deepsleep mode, IOs float, RAM is lost, and application will start from beginning after waking up
-// if deep_sleep == true, device will enter deepsleep mode
-static bool deep_sleep = false;
-
 mDot* dot = NULL;
 lora::ChannelPlan* plan = NULL;
 
@@ -403,15 +368,17 @@ int main() {
     if (!dot->getStandbyFlag() && !dot->getPreserveSession()) {
 
         dot->setJoinMode(mDot::OTA);
-        update_ota_config_name_phrase(network_name, network_passphrase, frequency_sub_band, network_type, ack);
-        //update_ota_config_id_key(network_id, network_key, frequency_sub_band, network_type, ack);
+#if defined(DERIVE_FROM_TEXT)
+        update_ota_config_name_phrase(cfg::network_name, cfg::network_passphrase, cfg::frequency_sub_band, cfg::network_type, cfg::ack);
+#else
+        update_ota_config_id_key(cfg::network_id, cfg::network_key, cfg::frequency_sub_band, cfg::network_type, cfg::ack);
+#endif
 
         logInfo("saving configuration");
         if (!dot->saveConfig()) {
             logError("failed to save configuration");
         }
     }
-
 
     dot->setClass("A");
 
@@ -427,10 +394,11 @@ int main() {
     dot->setJoinNonceValidation(true);
     dot->setLinkCheckThreshold(0);
     dot->setLinkCheckCount(0);
+    dot->setAppPort(224);
+    // These override the settings in example_config.h
     dot->setFrequencySubBand(1); // US915/AU915 8 channel test, set to 0 for 64 channel tests
     dot->setAck(0);
     dot->setAdr(true);
-    dot->setAppPort(224);
 
     // display configuration
     display_config();

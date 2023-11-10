@@ -178,7 +178,7 @@ void update_ota_config_name_phrase(std::string network_name, std::string network
     }
 }
 
-void update_ota_config_id_key(uint8_t *network_id, uint8_t *network_key, uint8_t frequency_sub_band, lora::NetworkType network_type, uint8_t ack) {
+void update_ota_config_id_key(const uint8_t *network_id, const uint8_t *network_key, uint8_t frequency_sub_band, lora::NetworkType network_type, uint8_t ack) {
     std::vector<uint8_t> current_network_id = dot->getNetworkId();
     std::vector<uint8_t> current_network_key = dot->getNetworkKey();
     uint8_t current_frequency_sub_band = dot->getFrequencySubBand();
@@ -225,7 +225,7 @@ void update_ota_config_id_key(uint8_t *network_id, uint8_t *network_key, uint8_t
     }
 }
 
-void update_manual_config(uint8_t *network_address, uint8_t *network_session_key, uint8_t *data_session_key, uint8_t frequency_sub_band, lora::NetworkType network_type, uint8_t ack) {
+void update_manual_config(const uint8_t *network_address, const uint8_t *network_session_key, const uint8_t *data_session_key, uint8_t frequency_sub_band, lora::NetworkType network_type, uint8_t ack) {
     std::vector<uint8_t> current_network_address = dot->getNetworkAddress();
     std::vector<uint8_t> current_network_session_key = dot->getNetworkSessionKey();
     std::vector<uint8_t> current_data_session_key = dot->getDataSessionKey();
@@ -279,7 +279,7 @@ void update_manual_config(uint8_t *network_address, uint8_t *network_session_key
     }
 }
 
-void update_peer_to_peer_config(uint8_t *network_address, uint8_t *network_session_key, uint8_t *data_session_key, uint32_t tx_frequency, uint8_t tx_datarate, uint8_t tx_power) {
+void update_peer_to_peer_config(const uint8_t *network_address, const uint8_t *network_session_key, const uint8_t *data_session_key, uint32_t tx_frequency, uint8_t tx_datarate, uint8_t tx_power) {
     std::vector<uint8_t> current_network_address = dot->getNetworkAddress();
     std::vector<uint8_t> current_network_session_key = dot->getNetworkSessionKey();
     std::vector<uint8_t> current_data_session_key = dot->getDataSessionKey();
@@ -807,10 +807,42 @@ void sleep_restore_io() {
 #endif
 }
 
-int send_data(std::vector<uint8_t> data) {
+std::vector<uint8_t> read_sensor() {
+    uint16_t light;
+    std::vector<uint8_t> tx_data;
+#if defined(TARGET_XDOT_L151CC)
+    // configure the ISL29011 sensor on the xDot-DK for continuous ambient light sampling, 16 bit conversion, and maximum range
+    lux.setMode(ISL29011::ALS_CONT);
+    lux.setResolution(ISL29011::ADC_16BIT);
+    lux.setRange(ISL29011::RNG_64000);
+
+    // get the latest light sample
+    light = lux.getData();
+    tx_data.push_back((light >> 8) & 0xFF);
+    tx_data.push_back(light & 0xFF);
+    logInfo("light: %lu [0x%04X]", light, light);
+    // put the LSL29011 ambient light sensor into a low power state
+    lux.setMode(ISL29011::PWR_DOWN);
+#elif defined(TARGET_XDOT_MAX32670)
+    // get some dummy data
+    light = rand();
+    tx_data.push_back((light >> 8) & 0xFF);
+    tx_data.push_back(light & 0xFF);
+    logInfo("light: %lu [0x%04X]", light, light);
+#else
+    // get some dummy data
+    light = lux.read_u16();
+    tx_data.push_back((light >> 8) & 0xFF);
+    tx_data.push_back(light & 0xFF);
+    logInfo("light: %lu [0x%04X]", light, light);
+#endif
+    return tx_data;
+}
+
+int send_data() {
     int32_t ret;
 
-    ret = dot->send(data);
+    ret = dot->send(read_sensor());
     if (ret != mDot::MDOT_OK) {
         logError("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
     } else {

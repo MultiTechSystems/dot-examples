@@ -3,39 +3,10 @@
 
 #if ACTIVE_EXAMPLE == PEER_TO_PEER_EXAMPLE
 
-/////////////////////////////////////////////////////////////////////////////
-// -------------------- DOT LIBRARY REQUIRED ------------------------------//
-// * Because these example programs can be used for both mDot and xDot     //
-//     devices, the LoRa stack is not included. The libmDot library should //
-//     be imported if building for mDot devices. The libxDot library       //
-//     should be imported if building for xDot devices.                    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libmDot-mbed5/        //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-dev-mbed5/    //
-// * https://developer.mbed.org/teams/MultiTech/code/libxDot-mbed5/        //
-/////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////
-// * these options must match between the two devices in   //
-//   order for communication to be successful
-/////////////////////////////////////////////////////////////
-static uint8_t network_address[] = { 0x01, 0x02, 0x03, 0x04 };
-static uint8_t network_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04 };
-static uint8_t data_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0x04 };
-
 mDot* dot = NULL;
 lora::ChannelPlan* plan = NULL;
 
 mbed::UnbufferedSerial pc(USBTX, USBRX);
-
-#if defined(TARGET_XDOT_L151CC)
-I2C i2c(I2C_SDA, I2C_SCL);
-ISL29011 lux(i2c);
-#elif defined(TARGET_XDOT_MAX32670)
-// no analog available
-#else
-AnalogIn lux(XBEE_AD0);
-#endif
 
 int main() {
     // Custom event handler for automatically displaying RX data
@@ -139,7 +110,7 @@ int main() {
     }
     // in PEER_TO_PEER mode there is no join request/response transaction
     // as long as both Dots are configured correctly, they should be able to communicate
-    update_peer_to_peer_config(network_address, network_session_key, data_session_key, tx_frequency, tx_datarate, tx_power);
+    update_peer_to_peer_config(cfg::network_address, cfg::network_session_key, cfg::data_session_key, tx_frequency, tx_datarate, tx_power);
 
     // save changes to configuration
     logInfo("saving configuration");
@@ -151,44 +122,12 @@ int main() {
     display_config();
 
     while (true) {
-        uint16_t light;
-        std::vector<uint8_t> tx_data;
-
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-#if defined(TARGET_XDOT_L151CC)
-        // configure the ISL29011 sensor on the xDot-DK for continuous ambient light sampling, 16 bit conversion, and maximum range
-        lux.setMode(ISL29011::ALS_CONT);
-        lux.setResolution(ISL29011::ADC_16BIT);
-        lux.setRange(ISL29011::RNG_64000);
-
-        // get the latest light sample and send it to the gateway
-        light = lux.getData();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
-
-        // put the LSL29011 ambient light sensor into a low power state
-        lux.setMode(ISL29011::PWR_DOWN);
-#elif defined(TARGET_XDOT_MAX32670)
-        // get some dummy data and send it to the gateway
-        light = rand();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
-#else
-        // get some dummy data and send it to the gateway
-        light = lux.read_u16();
-        tx_data.push_back((light >> 8) & 0xFF);
-        tx_data.push_back(light & 0xFF);
-        logInfo("light: %lu [0x%04X]", light, light);
-        send_data(tx_data);
-#endif
+        send_data();
 
         // the Dot can't sleep in PEER_TO_PEER mode
         // it must be waiting for data from the other Dot
