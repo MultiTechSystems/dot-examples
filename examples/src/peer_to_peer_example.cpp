@@ -24,6 +24,8 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
+    logInfo("----- Running peer to peer example -----");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);
@@ -128,6 +130,7 @@ int main() {
         }
 
         send_data();
+        // Since downlinks can come at anytime, handle them in RadioEvents.h.
 
         // the Dot can't sleep in PEER_TO_PEER mode
         // it must be waiting for data from the other Dot

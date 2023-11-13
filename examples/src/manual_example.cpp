@@ -20,6 +20,8 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
+    logInfo("----- Running manual example -----");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);
@@ -86,7 +88,15 @@ int main() {
         // In MANUAL join mode, there is no join request/response transaction. As long as the Dot is configured
         // correctly and provisioned correctly on the gateway, it should be able to communicate.
         
-        send_data();
+        if(send_data() == mDot::MDOT_OK) {
+            // Downlink data processing can be handled here or in RadioEvent.h.
+            if (events.PacketReceived && (events.RxPort==(dot->getAppPort()))) {
+                std::vector<uint8_t> rx_data;
+                if (dot->recv(rx_data) == mDot::MDOT_OK) {
+                    logInfo("Downlink data (port %d): %s", dot->getAppPort(),mts::Text::bin2hexString(rx_data.data(), rx_data.size()).c_str());
+                }
+            }
+        }
 
         // If going into deepsleep mode, save the session so we don't need to join again after waking up
         // not necessary if going into sleep mode since RAM is retained

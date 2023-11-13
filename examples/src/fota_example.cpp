@@ -93,6 +93,8 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
+    logInfo("----- Running FOTA example -----");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);
@@ -168,6 +170,7 @@ int main() {
         }
 
         send_data();
+        // Since downlinks can come at anytime in class C mode, handle them in RadioEvents.h.
 
         // the Dot can't sleep in class C mode
         // it must be waiting for data from the gateway

@@ -20,6 +20,8 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
+    logInfo("----- Running auto ota example -----");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);
@@ -90,9 +92,20 @@ int main() {
     }
 
     while (true) {
-        // Automatically joins the network.
+        // join network if not joined
+        if (!dot->getNetworkJoinStatus()) {
+            join_network();
+        }
 
-        send_data();
+        if(send_data() == mDot::MDOT_OK) {
+            // Downlink data processing can be handled here or in RadioEvent.h.
+            if (events.PacketReceived && (events.RxPort==(dot->getAppPort()))) {
+                std::vector<uint8_t> rx_data;
+                if (dot->recv(rx_data) == mDot::MDOT_OK) {
+                    logInfo("Downlink data (port %d) %s", dot->getAppPort(),mts::Text::bin2hexString(rx_data.data(), rx_data.size()).c_str());
+                }
+            }
+        }
 
         // Automatically saves and restores the session around deep sleep mode.
 

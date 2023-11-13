@@ -112,7 +112,7 @@ const uint8_t ack = 0;
 // * If deep_sleep == true, device will enter deepsleep     //
 //     mode.                                                //
 //////////////////////////////////////////////////////////////
-const bool deep_sleep = false;
+const bool deep_sleep = true;
 
 ////////////////////////////////////////////////////////////////
 // * Configure wake mode.                                     //
@@ -161,7 +161,7 @@ const uint8_t wake_pin_trigger = RISE;
 } // end of cfg namespace
 
 //////////////////////////////////////////////////////////////////
-// * Configure the channel pland/region.                        //
+// * Configure the channel plan/region.                         //
 // * The Channel Plan should be chosen with command line        //
 //     arguments or in the mbed_app.json file macros            //
 //     section as follows:                                      //

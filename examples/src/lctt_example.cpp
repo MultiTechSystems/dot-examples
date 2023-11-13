@@ -350,6 +350,8 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
+    logInfo("----- Running LCTT example -----");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);

@@ -22,6 +22,18 @@ public:
     virtual void PacketRx(uint8_t port, uint8_t *payload, uint16_t size, int16_t rssi, int16_t snr, lora::DownlinkControl ctrl, uint8_t slot, uint8_t retries, uint32_t address, uint32_t fcnt, bool dupRx) {
         mDotEvent::PacketRx(port, payload, size, rssi, snr, ctrl, slot, retries, address, fcnt, dupRx);
 
+        // Downlink of payload can be processed here. Port 1 is the default. Other ports are valid to use.
+        // Check latest LoRaWAN spec for available ports.
+        if (port==(dot->getAppPort())) {
+            _data.clear();
+            
+            for (uint16_t i = 0; i < size; ++i) {
+                _data.push_back(payload[i]);
+            }
+
+            printf("Downlink payload (port %d): %s\r\n", port, mts::Text::bin2hexString(_data.data(), _data.size()).c_str());
+        }
+
         if(port == 200 || port == 201 || port == 202) {
             Fota::getInstance()->processCmd(payload, port, size);
         }

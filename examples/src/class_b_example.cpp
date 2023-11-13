@@ -23,6 +23,8 @@ int main() {
 
     mts::MTSLog::setLogLevel(mts::MTSLog::TRACE_LEVEL);
 
+    logInfo("----- Running class B example -----");
+
     // Create channel plan
     plan = create_channel_plan();
     assert(plan);
