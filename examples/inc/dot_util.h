@@ -44,6 +44,10 @@ void sleep_configure_io();
 
 void sleep_restore_io();
 
-int send_data();
+void dot_wait_for_channel();
+
+void thread_wait_for_channel();
+
+int send(uint8_t &size_sent);
 
 #endif

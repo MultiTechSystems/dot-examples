@@ -6,9 +6,9 @@
 #include "LowPower.h"
 #endif
 
-void sleep_wake_rtc_only(bool deepsleep);
+void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep);
 void sleep_wake_interrupt_only(bool deepsleep);
-void sleep_wake_rtc_or_interrupt(bool deepsleep);
+void sleep_wake_rtc_or_interrupt(uint32_t sleep_s, bool deepsleep);
 
 #if defined(TARGET_MTS_MDOT_F411RE)
 uint32_t portA[6];
@@ -363,39 +363,36 @@ void join_network() {
         ret = dot->joinNetwork();
         if (ret != mDot::MDOT_OK) {
             logError("failed to join network %d:%s", ret, mDot::getReturnCodeString(ret).c_str());
-            // in some frequency bands we need to wait until another channel is available before transmitting again
-            uint32_t delay_s = (dot->getNextTxMs() / 1000) + 1;
-            if (delay_s < 5) {
-                logInfo("waiting %lu s until next free channel", delay_s);
-                ThisThread::sleep_for(std::chrono::seconds(delay_s));
-            } else {
-                logInfo("sleeping %lu s until next free channel", delay_s);
-                dot->sleep(delay_s, mDot::RTC_ALARM, true);
-            }
+            // This is needed for all channel plans. Even if the channel plan does not have duty cycle restrictions,
+            // join will have some amount of random back off. This is for the rare case where many endpoints
+            // power up at the same time. Staggering joins will help ensure successful joins.
+            dot_wait_for_channel();
         }
     }
 }
 
 void dot_sleep(){
     if(cfg::wake_mode == cfg::interval)
-        sleep_wake_rtc_only(cfg::deep_sleep);
+        sleep_wake_rtc_only(cfg::sleep_seconds, cfg::deep_sleep);
     else if(cfg::wake_mode == cfg::interrupt)
         sleep_wake_interrupt_only(cfg::deep_sleep);
     else if(cfg::wake_mode == cfg::interval_or_interrupt)
-        sleep_wake_rtc_or_interrupt(cfg::deep_sleep);
+        sleep_wake_rtc_or_interrupt(cfg::sleep_seconds, cfg::deep_sleep);
     else
         logError("Invalid wake mode %d", cfg::wake_mode);
 }
 
-void sleep_wake_rtc_only(bool deepsleep) {
-    // in some frequency bands we need to wait until another channel is available before transmitting again
-    // wait at least 10s between transmissions
-    uint32_t delay_s = dot->getNextTxMs() / 1000;
-    if (delay_s < 10) {
-        delay_s = 10;
+void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep) {
+#if !defined (TARGET_XDOT_MAX32670) && (ACTIVE_EXAMPLE != AUTO_OTA_EXAMPLE)
+    // If going into deepsleep mode, save the session so we don't need to join again after waking up
+    // not necessary if going into sleep mode since RAM is retained
+    // The xdot advanced model automatically saves and restores around deepsleep.
+    if (deepsleep) {
+        logInfo("saving network session to NVM");
+        dot->saveNetworkSession();
     }
-
-    logInfo("%ssleeping %lus", deepsleep ? "deep" : "", delay_s);
+#endif
+    logInfo("%ssleeping %lus", deepsleep ? "deep" : "", sleep_s);
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
 
     // SLEEP MODE
@@ -431,8 +428,7 @@ void sleep_wake_rtc_only(bool deepsleep) {
     sleep_configure_io();
 #endif
 
-    // go to sleep/deepsleep for delay_s seconds and wake using the RTC alarm
-    dot->sleep(delay_s, mDot::RTC_ALARM, deepsleep);
+    dot->sleep(sleep_s, mDot::RTC_ALARM, deepsleep);
 
     if (! deepsleep) {
         // restore the GPIO state.
@@ -441,6 +437,15 @@ void sleep_wake_rtc_only(bool deepsleep) {
 }
 
 void sleep_wake_interrupt_only(bool deepsleep) {
+#if !defined (TARGET_XDOT_MAX32670) && (ACTIVE_EXAMPLE != AUTO_OTA_EXAMPLE)
+    // If going into deepsleep mode, save the session so we don't need to join again after waking up
+    // not necessary if going into sleep mode since RAM is retained
+    // The xdot advanced model automatically saves and restores around deepsleep.
+    if (deepsleep) {
+        logInfo("saving network session to NVM");
+        dot->saveNetworkSession();
+    }
+#endif
     dot->setWakePinMode(cfg::wake_pin_mode);
     dot->setWakePinTrigger(cfg::wake_pin_trigger);
     dot->setWakePin(dot->pinNum2Name(cfg::wake_pin));
@@ -497,21 +502,25 @@ void sleep_wake_interrupt_only(bool deepsleep) {
     }
 }
 
-void sleep_wake_rtc_or_interrupt(bool deepsleep) {
-    // in some frequency bands we need to wait until another channel is available before transmitting again
-    // wait at least 10s between transmissions
-    uint32_t delay_s = dot->getNextTxMs() / 1000;
-    if (delay_s < 10) {
-        delay_s = 10;
+void sleep_wake_rtc_or_interrupt(uint32_t sleep_s, bool deepsleep) {
+#if !defined (TARGET_XDOT_MAX32670) && (ACTIVE_EXAMPLE != AUTO_OTA_EXAMPLE)
+    // If going into deepsleep mode, save the session so we don't need to join again after waking up
+    // not necessary if going into sleep mode since RAM is retained
+    // The xdot advanced model automatically saves and restores around deepsleep.
+    if (deepsleep) {
+        logInfo("saving network session to NVM");
+        dot->saveNetworkSession();
     }
-
+#endif
+    dot->setWakePinMode(cfg::wake_pin_mode);
+    dot->setWakePinTrigger(cfg::wake_pin_trigger);
     dot->setWakePin(dot->pinNum2Name(cfg::wake_pin));
 #if defined (TARGET_XDOT_L151CC)
-    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str(), delay_s);
+    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", deepsleep ? "WAKE" : mDot::pinName2Str(dot->getWakePin()).c_str(), sleep_s);
 #elif defined (TARGET_MTS_MDOT_F411RE)
-    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str(), delay_s);
+    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", deepsleep ? "DIO7" : mDot::pinName2Str(dot->getWakePin()).c_str(), sleep_s);
 #elif defined(TARGET_XDOT_MAX32670)
-    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", mDot::pinName2Str(dot->getWakePin()).c_str(), delay_s);
+    logInfo("%ssleeping until interrupt on %s pin or %d seconds", deepsleep ? "deep" : "", mDot::pinName2Str(dot->getWakePin()).c_str(), sleep_s);
 #endif
 
     logInfo("application will %s after waking up", deepsleep ? "execute from beginning" : "resume");
@@ -551,7 +560,7 @@ void sleep_wake_rtc_or_interrupt(bool deepsleep) {
 
     // go to sleep/deepsleep and wake using the RTC alarm after delay_s seconds or rising edge of configured wake pin (only the WAKE pin in deepsleep)
     // whichever comes first will wake the xDot
-    dot->sleep(delay_s, mDot::RTC_ALARM_OR_INTERRUPT, deepsleep);
+    dot->sleep(sleep_s, mDot::RTC_ALARM_OR_INTERRUPT, deepsleep);
 
     if (! deepsleep) {
         // restore the GPIO state.
@@ -807,9 +816,9 @@ void sleep_restore_io() {
 #endif
 }
 
-std::vector<uint8_t> read_sensor() {
+void read_sensor(std::vector<uint8_t> &tx_data) {
     uint16_t light;
-    std::vector<uint8_t> tx_data;
+
 #if defined(TARGET_XDOT_L151CC)
     // configure the ISL29011 sensor on the xDot-DK for continuous ambient light sampling, 16 bit conversion, and maximum range
     lux.setMode(ISL29011::ALS_CONT);
@@ -836,13 +845,37 @@ std::vector<uint8_t> read_sensor() {
     tx_data.push_back(light & 0xFF);
     logInfo("light: %lu [0x%04X]", light, light);
 #endif
-    return tx_data;
+
 }
 
-int send_data() {
-    int32_t ret;
+// Puts entire device to sleep. No active threads.
+void dot_wait_for_channel() {
+    uint32_t next_tx_ms = dot->getNextTxMs();
+    if (next_tx_ms) {
+        logInfo("Sleep until next available channel");
+        sleep_wake_rtc_only(next_tx_ms/1000+1, false);
+    }
+}
 
-    ret = dot->send(read_sensor());
+// Allows other threads to run including downlink processing in RadioEvents.
+void thread_wait_for_channel() {
+    ThisThread::sleep_for(chrono::milliseconds(dot->getNextTxMs()));
+}
+
+int send(uint8_t &size_sent) {
+    int32_t ret;
+    std::vector<uint8_t> tx_data;
+
+    read_sensor(tx_data);
+    // Make sure there is enough room for the payload. For US915 DR0, it is limited to 11 and MAC commands may consume
+    // some of that space. Sending with no payload will send and clear the MAC commands freeing the payload space.
+    if (dot->getNextTxMaxSize() < tx_data.size()) {
+        logError("Not enough room for payload. Sending empty payload to clear MAC commands.");
+        tx_data.clear();
+    }
+    size_sent = tx_data.size();
+
+    ret = dot->send(tx_data);
     if (ret != mDot::MDOT_OK) {
         logError("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
     } else {

@@ -87,19 +87,26 @@ int main() {
     display_config();
 
     while (true) {
+        static uint8_t payload_size_sent;
+
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-        send_data();
-        // Since downlinks can come at anytime in class C mode, handle them in RadioEvents.h.
+        // If the channel plan has duty cycle restrictions, wait may be required.
+        thread_wait_for_channel();
 
-        // the Dot can't sleep in class C mode
-        // it must be waiting for data from the gateway
-        // send data every 30s
-        logInfo("waiting for 30s");
-        ThisThread::sleep_for(30s);
+        if((send(payload_size_sent) == mDot::MDOT_OK) && (payload_size_sent == 0)) {
+            // Sent empty payload intending to clear MAC commands. Don't sleep but send again so payload is sent.
+            // Warning: Payload always 0 if payload is larger than data rate allows.
+            // Since downlinks can come at anytime in class C mode, handle them in RadioEvents.h.
+        } else {
+            // The Dot can't sleep in class C mode. It must be ready for data from the gateway.
+            // Send data every 30s.
+            logInfo("waiting for 30s");
+            ThisThread::sleep_for(30s);
+        }
     }
 
     return 0;

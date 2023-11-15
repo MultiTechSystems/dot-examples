@@ -164,23 +164,28 @@ int main() {
     display_config();
 
     while (true) {
+        static uint8_t payload_size_sent;
+
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-        send_data();
+        // If the channel plan has duty cycle restrictions, wait may be required.
+        thread_wait_for_channel();
+        
+        // Don't perform any extra sends during fota.
+        send(payload_size_sent);
         // Since downlinks can come at anytime in class C mode, handle them in RadioEvents.h.
 
-        // the Dot can't sleep in class C mode
-        // it must be waiting for data from the gateway
-        // send data every 30s
+        // The Dot can't sleep in class C mode. It must be ready for data from the gateway.
+        // Send data every 30s.
         if (Fota::getInstance()->timeToStart() != 0) {
             logInfo("waiting for 30s");
             ThisThread::sleep_for(30s);
         } else {
-            // Reduce uplinks during FOTA, dot cannot receive while transmitting
-            // Too many lost packets will cause FOTA to fail
+            // Reduce uplinks during FOTA, dot cannot receive while transmitting.
+            // Too many missed downlink packets will cause FOTA to fail.
             logInfo("FOTA starting in %d seconds", Fota::getInstance()->timeToStart());
             logInfo("waiting for 300s");
             ThisThread::sleep_for(300s);

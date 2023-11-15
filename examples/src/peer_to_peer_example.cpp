@@ -124,17 +124,18 @@ int main() {
     display_config();
 
     while (true) {
+        static uint8_t payload_size_sent;
+
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-        send_data();
+        send(payload_size_sent);
         // Since downlinks can come at anytime, handle them in RadioEvents.h.
 
-        // the Dot can't sleep in PEER_TO_PEER mode
-        // it must be waiting for data from the other Dot
-        // send data every 5 seconds
+        // The Dot can't sleep in PEER_TO_PEER mode. It must be waiting for data from the other Dot.
+        // Send data every 5 seconds
         logInfo("waiting for 5s");
         ThisThread::sleep_for(5s);
     }

@@ -57,7 +57,7 @@
 #define LCTT_EXAMPLE             8  // see lctt_example.cpp
 
 #if !defined(ACTIVE_EXAMPLE)
-#define ACTIVE_EXAMPLE  LCTT_EXAMPLE
+#define ACTIVE_EXAMPLE  OTA_EXAMPLE
 #endif
 
 namespace cfg {
@@ -78,9 +78,9 @@ const uint8_t data_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0
 #define DERIVE_FROM_TEXT
 #if defined(DERIVE_FROM_TEXT)
 // AppEUI
-const std::string network_name = "MTS-SKF-2022";
+const std::string network_name = "MultiTech";
 // AppKey
-const std::string network_passphrase = "MTS-SKF-2022";
+const std::string network_passphrase = "MultiTech";
 #else // use kex keys instead of deriving from text
 // AppEUI
 const uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
@@ -113,6 +113,7 @@ const uint8_t ack = 0;
 //     mode.                                                //
 //////////////////////////////////////////////////////////////
 const bool deep_sleep = true;
+const uint32_t sleep_seconds = 10;
 
 ////////////////////////////////////////////////////////////////
 // * Configure wake mode.                                     //

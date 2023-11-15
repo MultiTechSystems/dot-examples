@@ -92,24 +92,40 @@ int main() {
     }
 
     while (true) {
+        // Defensive programming in case the gateway/network server continuously gives a reason to send.
+        static uint8_t consecutive_sends = 1;
+        static uint8_t payload_size_sent;
+
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-        if(send_data() == mDot::MDOT_OK) {
-            // Downlink data processing can be handled here or in RadioEvent.h.
-            if (events.PacketReceived && (events.RxPort==(dot->getAppPort()))) {
+        // If the channel plan has duty cycle restrictions, wait may be required.
+        dot_wait_for_channel();
+
+        if(send(payload_size_sent) == mDot::MDOT_OK) {
+            // In class A mode, downlinks only occur following an uplink. So process downlinks after a successful send.
+            if (events.PacketReceived && (events.RxPort == (dot->getAppPort()))) {
                 std::vector<uint8_t> rx_data;
                 if (dot->recv(rx_data) == mDot::MDOT_OK) {
                     logInfo("Downlink data (port %d) %s", dot->getAppPort(),mts::Text::bin2hexString(rx_data.data(), rx_data.size()).c_str());
                 }
             }
+            // Data pending is set for the following reasons.
+            // 1. There are downlinks queued up for this endpoint.
+            // 2. There are MAC commands queued up for this endpoint.
+            // 3. An Ack has been requested of this endpoint.
+            if ((dot->getDataPending() || (payload_size_sent == 0)) && consecutive_sends < 4) {
+                // Don't sleep and send again. 
+                consecutive_sends++;
+            } else {
+                consecutive_sends = 0;
+                dot_sleep();
+            }
+        } else { // Send failed. Don't drain battery by repeatedly sending.
+            dot_sleep();
         }
-
-        // Automatically saves and restores the session around deep sleep mode.
-
-        dot_sleep();
     }
 
     return 0;
