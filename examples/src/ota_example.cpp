@@ -118,7 +118,7 @@ int main() {
             }
             // Data pending is set for the following reasons.
             // 1. There are downlinks queued up for this endpoint.
-            // 2. There are MAC commands queued up for this endpoint.
+            // 2. There are MAC command answers pending.
             // 3. An Ack has been requested of this endpoint.
             if ((dot->getDataPending() || (payload_size_sent == 0)) && consecutive_sends < 4) {
                 // Don't sleep and send again. 

@@ -81,7 +81,7 @@ const uint8_t data_session_key[] = { 0x01, 0x02, 0x03, 0x04, 0x01, 0x02, 0x03, 0
 const std::string network_name = "MultiTech";
 // AppKey
 const std::string network_passphrase = "MultiTech";
-#else // use kex keys instead of deriving from text
+#else // use hex keys instead of deriving from text
 // AppEUI
 const uint8_t network_id[] = { 0x6C, 0x4E, 0xEF, 0x66, 0xF4, 0x79, 0x86, 0xA6 };
 // AppKey

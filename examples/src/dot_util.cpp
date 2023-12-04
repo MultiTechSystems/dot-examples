@@ -354,21 +354,21 @@ void update_network_link_check_config(uint8_t link_check_count, uint8_t link_che
 }
 
 void join_network() {
-    int32_t j_attempts = 0;
-    int32_t ret = mDot::MDOT_ERROR;
-
-    // attempt to join the network
-    while (ret != mDot::MDOT_OK) {
-        logInfo("attempt %d to join network", ++j_attempts);
+    int8_t j_attempts = 2;
+    int32_t ret;
+    for (int8_t i = 0; i < j_attempts; i++) {
+        // This is needed for all channel plans. Even if the channel plan does not have duty cycle restrictions,
+        // join will have some amount of random back off for the rare case where many endpoints
+        // power up at the same time. Staggering joins will help ensure successful joins.
+        dot_wait_for_channel();
+        logInfo("Join try %d of %d", i+1, j_attempts);
         ret = dot->joinNetwork();
-        if (ret != mDot::MDOT_OK) {
-            logError("failed to join network %d:%s", ret, mDot::getReturnCodeString(ret).c_str());
-            // This is needed for all channel plans. Even if the channel plan does not have duty cycle restrictions,
-            // join will have some amount of random back off. This is for the rare case where many endpoints
-            // power up at the same time. Staggering joins will help ensure successful joins.
-            dot_wait_for_channel();
+        if (ret == mDot::MDOT_OK) {
+            dot->saveNetworkSession();
+            return;
         }
     }
+    dot->restoreNetworkSession();
 }
 
 void dot_sleep(){
