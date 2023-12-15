@@ -57,7 +57,7 @@
 #define LCTT_EXAMPLE             8  // see lctt_example.cpp
 
 #if !defined(ACTIVE_EXAMPLE)
-#define ACTIVE_EXAMPLE  OTA_EXAMPLE
+#define ACTIVE_EXAMPLE OTA_EXAMPLE
 #endif
 
 namespace cfg {
@@ -112,7 +112,7 @@ const uint8_t ack = 0;
 // * If deep_sleep == true, device will enter deepsleep     //
 //     mode.                                                //
 //////////////////////////////////////////////////////////////
-const bool deep_sleep = true;
+const bool deep_sleep = false;
 const uint32_t sleep_seconds = 10;
 
 ////////////////////////////////////////////////////////////////

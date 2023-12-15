@@ -91,8 +91,12 @@ int main() {
     } else {
         // restore the saved session if the dot woke from deepsleep mode
         // useful to use with deepsleep because session info is otherwise lost when the dot enters deepsleep
+#if defined(TARGET_XDOT_MAX32670)
+        // Saving and restoring session around deep sleep is automatic for xDot-AD.
+#else        
         logInfo("restoring network session from NVM");
         dot->restoreNetworkSession();
+#endif
     }
 
     while (true) {
@@ -100,7 +104,9 @@ int main() {
         static uint8_t consecutive_sends = 1;
         static uint8_t payload_size_sent;
 
-        // join network if not joined
+        // Join network if join status indicates not joined. If link check threshold is not enabled, another method
+        // should be used to ensure connectivity and trigger joins. This could be based on not seeing a downlink for 
+        // an extended period of time.
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }

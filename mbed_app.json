@@ -10,7 +10,7 @@
         },
         "XDOT_MAX32670": {
             "target.app_offset": "0x10000",
-            "target.bootloader_img": "bootloaders/xdot-32670-boot-1.1.7.bin"
+            "target.bootloader_img": "bootloaders/xdot-AD-32670-boot.bin"
         },
         "MTS_MDOT_F411RE": {
             "target.app_offset": "0x10000",

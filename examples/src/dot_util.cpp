@@ -100,7 +100,8 @@ void display_config() {
     else if (network_mode == lora::PRIVATE_LORAWAN)
         network_mode_str = "Private LoRaWAN";
     logInfo("public network ----------- %s", network_mode_str.c_str());
-
+    logInfo("join delay  -------------- %d", dot->getJoinDelay());
+    logInfo("join nonce validation ---- %s", dot->getJoinNonceValidation() ? "enabled" : "disabled");
     logInfo("=========================");
     logInfo("credentials configuration");
     logInfo("=========================");
@@ -111,10 +112,13 @@ void display_config() {
 	logInfo("network session key------- %s", mts::Text::bin2hexString(dot->getNetworkSessionKey()).c_str());
 	logInfo("data session key---------- %s", mts::Text::bin2hexString(dot->getDataSessionKey()).c_str());
     } else {
+#if defined(DERIVE_FROM_TEXT)
 	logInfo("network name ------------- %s", dot->getNetworkName().c_str());
 	logInfo("network phrase ----------- %s", dot->getNetworkPassphrase().c_str());
+#else
 	logInfo("network EUI -------------- %s", mts::Text::bin2hexString(dot->getNetworkId()).c_str());
 	logInfo("network KEY -------------- %s", mts::Text::bin2hexString(dot->getNetworkKey()).c_str());
+#endif
     }
     logInfo("========================");
     logInfo("communication parameters");
@@ -122,7 +126,15 @@ void display_config() {
     if (dot->getJoinMode() == mDot::PEER_TO_PEER) {
 	logInfo("TX frequency ------------- %lu", dot->getTxFrequency());
     } else {
-	logInfo("acks --------------------- %s, %u attempts", dot->getAck() > 0 ? "on" : "off", dot->getAck());
+	logInfo("acks --------------------- %s, %u attempts", dot->getAck() > 0 ? "enabled" : "disabled", dot->getAck());
+    }
+    logInfo("link check count --------- %d", dot->getLinkCheckCount());
+    logInfo("link check threshold ----- %d", dot->getLinkCheckThreshold());
+    logInfo("adaptive data rate ------- %s", dot->getAdr() == 0 ? "disabled" : "enabled");
+    if (dot->getAdr()) {
+    logInfo("--- ADRAckLimit ---------- %d", dot->getAdrAckLimit());
+    logInfo("--- ADRAckDelay ---------- %d", dot->getAdrAckDelay());
+    logInfo("--- ADR auto increment --- %s", dot->getDisableIncrementDR() == 0 ? "disabled" : "enabled");
     }
     logInfo("TX datarate -------------- %s", mDot::DataRateStr(dot->getTxDataRate()).c_str());
     logInfo("TX power ----------------- %lu dBm", dot->getTxPower());
@@ -313,24 +325,24 @@ void update_peer_to_peer_config(const uint8_t *network_address, const uint8_t *n
     }
 
     if (current_tx_frequency != tx_frequency) {
-	logInfo("changing TX frequency from %lu to %lu", current_tx_frequency, tx_frequency);
-	if (dot->setTxFrequency(tx_frequency) != mDot::MDOT_OK) {
-	    logError("failed to set TX frequency to %lu", tx_frequency);
-	}
+        logInfo("changing TX frequency from %lu to %lu", current_tx_frequency, tx_frequency);
+        if (dot->setTxFrequency(tx_frequency) != mDot::MDOT_OK) {
+            logError("failed to set TX frequency to %lu", tx_frequency);
+        }
     }
 
     if (current_tx_datarate != tx_datarate) {
-	logInfo("changing TX datarate from %u to %u", current_tx_datarate, tx_datarate);
-	if (dot->setTxDataRate(tx_datarate) != mDot::MDOT_OK) {
-	    logError("failed to set TX datarate to %u", tx_datarate);
-	}
+        logInfo("changing TX datarate from %u to %u", current_tx_datarate, tx_datarate);
+        if (dot->setTxDataRate(tx_datarate) != mDot::MDOT_OK) {
+            logError("failed to set TX datarate to %u", tx_datarate);
+        }
     }
 
     if (current_tx_power != tx_power) {
-	logInfo("changing TX power from %u to %u", current_tx_power, tx_power);
-	if (dot->setTxPower(tx_power) != mDot::MDOT_OK) {
-	    logError("failed to set TX power to %u", tx_power);
-	}
+        logInfo("changing TX power from %u to %u", current_tx_power, tx_power);
+        if (dot->setTxPower(tx_power) != mDot::MDOT_OK) {
+            logError("failed to set TX power to %u", tx_power);
+        }
     }
 }
 
@@ -339,17 +351,17 @@ void update_network_link_check_config(uint8_t link_check_count, uint8_t link_che
     uint8_t current_link_check_threshold = dot->getLinkCheckThreshold();
 
     if (current_link_check_count != link_check_count) {
-	logInfo("changing link check count from %u to %u", current_link_check_count, link_check_count);
-	if (dot->setLinkCheckCount(link_check_count) != mDot::MDOT_OK) {
-	    logError("failed to set link check count to %u", link_check_count);
-	}
+        logInfo("changing link check count from %u to %u", current_link_check_count, link_check_count);
+        if (dot->setLinkCheckCount(link_check_count) != mDot::MDOT_OK) {
+            logError("failed to set link check count to %u", link_check_count);
+        }
     }
 
     if (current_link_check_threshold != link_check_threshold) {
-	logInfo("changing link check threshold from %u to %u", current_link_check_threshold, link_check_threshold);
-	if (dot->setLinkCheckThreshold(link_check_threshold) != mDot::MDOT_OK) {
-	    logError("failed to set link check threshold to %u", link_check_threshold);
-	}
+        logInfo("changing link check threshold from %u to %u", current_link_check_threshold, link_check_threshold);
+        if (dot->setLinkCheckThreshold(link_check_threshold) != mDot::MDOT_OK) {
+            logError("failed to set link check threshold to %u", link_check_threshold);
+        }
     }
 }
 
@@ -364,11 +376,18 @@ void join_network() {
         logInfo("Join try %d of %d", i+1, j_attempts);
         ret = dot->joinNetwork();
         if (ret == mDot::MDOT_OK) {
-            dot->saveNetworkSession();
             return;
         }
     }
-    dot->restoreNetworkSession();
+    if (dot->getLinkCheckThreshold() == 0) {
+        // If link check threshold is disabled, some other method should be employed to ensure network connectivity. In
+        // that case it can make sense to restore the old session on join failure as it could still be valid.
+        dot->restoreNetworkSession();
+    }
+    else {
+        // Do not restore the session if link check threshold is enabled. This can set the join status back to joined
+        // when it is legitimately lost.
+    }
 }
 
 void dot_sleep(){
@@ -383,10 +402,12 @@ void dot_sleep(){
 }
 
 void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep) {
-#if !defined (TARGET_XDOT_MAX32670) && (ACTIVE_EXAMPLE != AUTO_OTA_EXAMPLE)
-    // If going into deepsleep mode, save the session so we don't need to join again after waking up
-    // not necessary if going into sleep mode since RAM is retained
-    // The xdot advanced model automatically saves and restores around deepsleep.
+#if defined(TARGET_XDOT_MAX32670) || (ACTIVE_EXAMPLE == AUTO_OTA_EXAMPLE)
+    // xDot-AD automatically saves when going into deepsleep and restores on wakeup.
+    // All dots automatically save when going into deepsleep and restore on wakeup with auto OTA mode is set.
+#else
+    // In cases where session information would be lost over deepsleep save it.
+    // Save is not necessary if going into sleep mode since RAM is retained.
     if (deepsleep) {
         logInfo("saving network session to NVM");
         dot->saveNetworkSession();
@@ -437,10 +458,12 @@ void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep) {
 }
 
 void sleep_wake_interrupt_only(bool deepsleep) {
-#if !defined (TARGET_XDOT_MAX32670) && (ACTIVE_EXAMPLE != AUTO_OTA_EXAMPLE)
-    // If going into deepsleep mode, save the session so we don't need to join again after waking up
-    // not necessary if going into sleep mode since RAM is retained
-    // The xdot advanced model automatically saves and restores around deepsleep.
+#if defined(TARGET_XDOT_MAX32670) || (ACTIVE_EXAMPLE == AUTO_OTA_EXAMPLE)
+    // xDot-AD automatically saves session when going into deepsleep and restores it on wakeup.
+    // All dots automatically save session when going into deepsleep and restore it on wakeup when auto OTA mode is set.
+#else
+    // In cases where session information would be lost over deepsleep save it.
+    // Save is not necessary if going into sleep mode since RAM is retained.
     if (deepsleep) {
         logInfo("saving network session to NVM");
         dot->saveNetworkSession();
@@ -503,10 +526,12 @@ void sleep_wake_interrupt_only(bool deepsleep) {
 }
 
 void sleep_wake_rtc_or_interrupt(uint32_t sleep_s, bool deepsleep) {
-#if !defined (TARGET_XDOT_MAX32670) && (ACTIVE_EXAMPLE != AUTO_OTA_EXAMPLE)
-    // If going into deepsleep mode, save the session so we don't need to join again after waking up
-    // not necessary if going into sleep mode since RAM is retained
-    // The xdot advanced model automatically saves and restores around deepsleep.
+#if defined(TARGET_XDOT_MAX32670) || (ACTIVE_EXAMPLE == AUTO_OTA_EXAMPLE)
+    // xDot-AD automatically saves when going into deepsleep and restores on wakeup.
+    // All dots automatically save when going into deepsleep and restore on wakeup with auto OTA mode is set.
+#else
+    // In cases where session information would be lost over deepsleep save it.
+    // Save is not necessary if going into sleep mode since RAM is retained.
     if (deepsleep) {
         logInfo("saving network session to NVM");
         dot->saveNetworkSession();
