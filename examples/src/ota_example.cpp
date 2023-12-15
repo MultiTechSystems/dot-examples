@@ -101,7 +101,8 @@ int main() {
 
     while (true) {
         // Defensive programming in case the gateway/network server continuously gives a reason to send.
-        static uint8_t consecutive_sends = 1;
+        const uint8_t max_consecutive_sends = 4;
+        static uint8_t consecutive_sends = max_consecutive_sends;
         static uint8_t payload_size_sent;
 
         // Join network if join status indicates not joined. If link check threshold is not enabled, another method
@@ -127,11 +128,11 @@ int main() {
             //    of a downlink. So, a missed downlink results in no data pending for this reason.
             // 2. There are MAC command answers pending.
             // 3. An Ack has been requested of this endpoint.
-            if ((dot->getDataPending() || (payload_size_sent == 0)) && consecutive_sends < 4) {
+            if ((dot->getDataPending() || (payload_size_sent == 0)) && consecutive_sends > 1) {
                 // Don't sleep and send again. 
-                consecutive_sends++;
+                consecutive_sends--;
             } else {
-                consecutive_sends = 0;
+                consecutive_sends = max_consecutive_sends;
                 dot_sleep();
             }
         } else { // Send failed. Don't drain battery by repeatedly sending.
