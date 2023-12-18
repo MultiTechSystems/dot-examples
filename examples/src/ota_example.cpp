@@ -131,8 +131,16 @@ int main() {
             // 4. Sent an empty payload to clear MAC commands. dot->hasMacCommands is not true now but that's because an 
             //    empty packet was sent making room for the actual payload to be sent.
             if ((dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || (payload_size_sent == 0)) && consecutive_sends > 1) {
-                // Don't sleep... send again. 
+                // Don't sleep... send again.
                 consecutive_sends--;
+                if(dot->getDataPending())
+                    logInfo("Data pending... send again");
+                if(dot->hasMacCommands())
+                    logInfo("Respond with MAC answers... send again");
+                if(dot->getAckRequested())
+                    logInfo("Ack has been requested... send again");
+                if(payload_size_sent == 0)
+                    logInfo("Sent an empty payload to clear MAC commands... send again");
             } else {
                 consecutive_sends = max_consecutive_sends;
                 dot_sleep();
