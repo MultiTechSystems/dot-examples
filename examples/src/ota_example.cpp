@@ -101,7 +101,7 @@ int main() {
 
     while (true) {
         // Defensive programming in case the gateway/network server continuously gives a reason to send.
-        const uint8_t max_consecutive_sends = 4;
+        static const uint8_t max_consecutive_sends = 4;
         static uint8_t consecutive_sends = max_consecutive_sends;
         static uint8_t payload_size_sent;
 
@@ -123,13 +123,15 @@ int main() {
                     logInfo("Downlink data (port %d) %s", dot->getAppPort(),mts::Text::bin2hexString(rx_data.data(), rx_data.size()).c_str());
                 }
             }
-            // Data pending is set for the following reasons.
-            // 1. There are downlinks queued up for this endpoint. This reason is cleared on send and updated on reception
-            //    of a downlink. So, a missed downlink results in no data pending for this reason.
+            // Optional reasons to send again right away.
+            // 1. Data pending. There are downlinks queued up for this endpoint. This reason is cleared on send and updated on reception
+            //    of a downlink. So, a missed downlink results in no data pending.
             // 2. There are MAC command answers pending.
             // 3. An Ack has been requested of this endpoint.
-            if ((dot->getDataPending() || (payload_size_sent == 0)) && consecutive_sends > 1) {
-                // Don't sleep and send again. 
+            // 4. Sent an empty payload to clear MAC commands. dot->hasMacCommands is not true now but that's because an 
+            //    empty packet was sent making room for the actual payload to be sent.
+            if ((dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || (payload_size_sent == 0)) && consecutive_sends > 1) {
+                // Don't sleep... send again. 
                 consecutive_sends--;
             } else {
                 consecutive_sends = max_consecutive_sends;
