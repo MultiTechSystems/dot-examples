@@ -108,7 +108,6 @@ int main() {
             // Since downlinks can come at anytime in class C mode, handle them in RadioEvents.h.
         }
 
-        consecutive_sends--;
         // Optional reasons to send again right away.
         // 1. There are MAC command answers pending.
         // 2. An Ack has been requested of this endpoint.
@@ -116,11 +115,10 @@ int main() {
         //    empty packet was sent making room for the actual payload to be sent.
         uint8_t sleep_s = 30;
         logInfo("Wait up to %d seconds before sending again", sleep_s);
-        while ((!dot->hasMacCommands() && !dot->getAckRequested() && !(payload_size_sent == 0)) || consecutive_sends <= 1) {
+        while (!dot->hasMacCommands() && !dot->getAckRequested() && !(payload_size_sent == 0)) {
             // The Dot can't sleep in class C mode. Here only this thread is sleeping. During this time, it will still
             // receive downlinks which are handled in RadioEvents.h.
             // Sends data every 30s.
-            consecutive_sends = max_consecutive_sends;
             ThisThread::sleep_for(1s);
             if (--sleep_s == 0)
                 break;
@@ -133,8 +131,6 @@ int main() {
                 logInfo("Ack has been requested");
             if(payload_size_sent == 0)
                 logInfo("Sent an empty payload to clear MAC commands");
-            if(consecutive_sends <= 1)
-                logInfo("Reached consecutive send limit of %d without sleeping", max_consecutive_sends);
         }
     }
 
