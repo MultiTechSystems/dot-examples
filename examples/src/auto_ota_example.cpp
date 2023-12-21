@@ -97,7 +97,9 @@ int main() {
         static uint8_t consecutive_sends = max_consecutive_sends;
         static uint8_t payload_size_sent;
 
-        // join network if not joined
+        // Join network if join status indicates not joined. If link check threshold is not enabled, another method
+        // should be used to ensure connectivity and trigger joins. This could be based on not seeing a downlink for 
+        // an extended period of time.
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
