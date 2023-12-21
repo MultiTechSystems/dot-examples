@@ -368,6 +368,7 @@ void update_network_link_check_config(uint8_t link_check_count, uint8_t link_che
 void join_network() {
     int8_t j_attempts = 2;
     int32_t ret;
+
     for (int8_t i = 0; i < j_attempts; i++) {
         // This is needed for all channel plans. Even if the channel plan does not have duty cycle restrictions,
         // join will have some amount of random back off for the rare case where many endpoints
@@ -379,14 +380,33 @@ void join_network() {
             return;
         }
     }
+
+    // If link check threshold is disabled, it can make sense to restore the old session on join failure as it
+    // could still be valid.
     if (dot->getLinkCheckThreshold() == 0) {
-        // If link check threshold is disabled, some other method should be employed to ensure network connectivity. In
-        // that case it can make sense to restore the old session on join failure as it could still be valid.
         dot->restoreNetworkSession();
     }
     else {
         // Do not restore the session if link check threshold is enabled. This can set the join status back to joined
         // when it is legitimately lost.
+    }
+
+    // On join failure check the dev EUI as it can cause join failures.
+    std::vector<uint8_t> devEUI = dot->getDeviceId();
+    bool validEUI = false;
+    for (uint8_t i : devEUI) {
+        if (i != 0 && i != 0xff) {
+            validEUI = true;
+            break;
+        }
+    }
+    if(!validEUI) {
+        logError("********** Dev EUI erased/invalid! Must be programmed to join! **********");
+        // Read the dev EUI from the dot's label and reprogram it.
+        /*std::vector<uint8_t> newDevEUI {0x00, 0x08, 0x00, 0x00, 0x04, 0x04, 0x2f, 0x82};
+        if (dot->setDeviceId(newDevEUI)!= mDot::MDOT_OK) {
+            logError("failed to set dev EUI");
+        }*/
     }
 }
 
@@ -895,14 +915,14 @@ int send(uint8_t &size_sent) {
     // Make sure there is enough room for the payload. For US915 DR0, it is limited to 11 and MAC commands may consume
     // some of that space. Sending with no payload will send and clear the MAC commands freeing the payload space.
     if (dot->getNextTxMaxSize() < tx_data.size()) {
-        logError("Not enough room for payload. Sending empty payload to clear MAC commands.");
+        logWarning("Not enough room for payload. Sending empty payload to clear MAC commands.");
         tx_data.clear();
     }
     size_sent = tx_data.size();
 
     ret = dot->send(tx_data);
     if (ret != mDot::MDOT_OK) {
-        logError("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
+        logWarning("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
     } else {
         logInfo("successfully sent data to %s", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway");
     }

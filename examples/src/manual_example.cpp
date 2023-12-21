@@ -104,6 +104,19 @@ int main() {
                     logInfo("Downlink data (port %d) %s", dot->getAppPort(),mts::Text::bin2hexString(rx_data.data(), rx_data.size()).c_str());
                 }
             }
+
+            // Print information updated on send/rcv.
+            if(dot->getDataPending())
+                logInfo("Data pending");
+            if(dot->hasMacCommands())
+                logInfo("Respond with MAC answers");
+            if(dot->getAckRequested())
+                logInfo("Ack has been requested");
+            if(payload_size_sent == 0)
+                logInfo("Sent an empty payload to clear MAC commands");
+            if(consecutive_sends <= 1)
+                logInfo("Reached consecutive send limit of %d without sleeping", max_consecutive_sends);
+            
             // Optional reasons to send again right away.
             // 1. Data pending. There are downlinks queued up for this endpoint. This reason is cleared on send and updated on reception
             //    of a downlink. So, a missed downlink results in no data pending.
@@ -112,16 +125,8 @@ int main() {
             // 4. Sent an empty payload to clear MAC commands. dot->hasMacCommands is not true now but that's because an 
             //    empty packet was sent making room for the actual payload to be sent.
             if ((dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || (payload_size_sent == 0)) && consecutive_sends > 1) {
-                // Don't sleep... send again. 
+                logInfo("Don't sleep... send again.");
                 consecutive_sends--;
-                if(dot->getDataPending())
-                    logInfo("Data pending... send again");
-                if(dot->hasMacCommands())
-                    logInfo("Respond with MAC answers... send again");
-                if(dot->getAckRequested())
-                    logInfo("Ack has been requested... send again");
-                if(payload_size_sent == 0)
-                    logInfo("Sent an empty payload to clear MAC commands... send again");
             } else {
                 consecutive_sends = max_consecutive_sends;
                 dot_sleep();
