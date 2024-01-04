@@ -38,6 +38,8 @@ void join_network();
 
 void dot_sleep();
 
+void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep);
+
 void sleep_save_io();
 
 void sleep_configure_io();
