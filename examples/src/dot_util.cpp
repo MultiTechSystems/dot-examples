@@ -1,4 +1,5 @@
 #include "dot_util.h"
+#include "Fota.h"
 
 #if defined(TARGET_XDOT_L151CC)
 #include "xdot_low_power.h"
@@ -411,14 +412,136 @@ void join_network() {
 }
 
 void dot_sleep(){
-    if(cfg::wake_mode == cfg::interval)
-        sleep_wake_rtc_only(cfg::sleep_seconds, cfg::deep_sleep);
-    else if(cfg::wake_mode == cfg::interrupt)
-        sleep_wake_interrupt_only(cfg::deep_sleep);
-    else if(cfg::wake_mode == cfg::interval_or_interrupt)
-        sleep_wake_rtc_or_interrupt(cfg::sleep_seconds, cfg::deep_sleep);
-    else
-        logError("Invalid wake mode %d", cfg::wake_mode);
+    // If FOTA is between setup and launch, don't allow deepsleep and max sleep time = time to launch.
+    // Once FOTA has launched (is active in class C mode) pause for the requested sleep duration or until the interrupt line has been activated.
+#ifdef SLEEP_TEST
+    int32_t FotaTimeToStart = cfg::sleep_seconds/2;
+#else
+    int32_t FotaTimeToStart = Fota::getInstance()->timeToStart();
+#endif
+
+    if(FotaTimeToStart >= 0 || !(Fota::getInstance()->idle())) {
+        logInfo("Sleep limited due to FOTA");
+
+        // The amount of time processor sleep is allowed.
+        int32_t sleepDuration = (FotaTimeToStart < cfg::sleep_seconds) ? FotaTimeToStart : cfg::sleep_seconds;
+        int32_t remainingDuration = (FotaTimeToStart < cfg::sleep_seconds) ? cfg::sleep_seconds - FotaTimeToStart : 0;
+
+        // Get the state of the wake pin before sleep.
+        DigitalIn wakePin(dot->pinNum2Name(cfg::wake_pin), cfg::wake_pin_mode);
+        int previous_state = wakePin.read();
+        
+        // Start a timer to track how long sleep lasted as sleep may be limited or blocked by the FOTA state.
+        mbed::LowPowerTimer timer;
+        timer.reset();
+        timer.start();
+        uint32_t elapsed_ms = 0;
+
+        if(cfg::wake_mode == cfg::interval) {
+            printf("***Interval started\r\n");
+            // Best effort to sleep for the allowed sleep duration.
+            while (elapsed_ms < sleepDuration * 1000) {
+                sleep_wake_rtc_only(sleepDuration, false);
+                elapsed_ms = duration_cast<milliseconds>(timer.elapsed_time()).count();
+                if (sleepDuration > elapsed_ms/1000)
+                    sleepDuration = sleepDuration - elapsed_ms/1000;
+                else
+                    sleepDuration = 0;
+            }
+            printf("***Interval rtc complete\r\n");
+            ThisThread::sleep_for(chrono::seconds(remainingDuration));
+            printf("***Interval ended\r\n");
+        }
+        else if(cfg::wake_mode == cfg::interrupt) {
+            int previous_state = wakePin.read();
+            bool wokeFromInterrupt = false;
+            sleepDuration = FotaTimeToStart;
+            // If wake is from interval not interrupt, it should still "sleep" until interrupt.
+            logInfo("***Interrupt started\r\n");
+            sleep_wake_rtc_or_interrupt(sleepDuration, false);
+            logInfo("***Interval passed rtc or interrupt\r\n");
+
+            while (!wokeFromInterrupt) {
+                // Taking this out it spins polling the interrupt pin drawing almost 3mA more.
+                ThisThread::sleep_for(chrono::milliseconds(10));
+                if (cfg::wake_pin_trigger == cfg::RISE) {
+                    if (wakePin.read() == 1 && previous_state == 0)
+                        wokeFromInterrupt = true;
+                    else if (previous_state == 1)
+                        previous_state = wakePin.read();
+                } else if (cfg::wake_pin_trigger == cfg::FALL) {
+                    if (wakePin.read() == 0 && previous_state == 1)
+                        wokeFromInterrupt = true;
+                    else if (previous_state == 0)
+                        previous_state = wakePin.read();
+                } else {
+                    if (wakePin.read() != previous_state)
+                        wokeFromInterrupt = true;
+                }
+            }
+            logInfo("***Interrupt ended");
+        }
+        else if(cfg::wake_mode == cfg::interval_or_interrupt) {
+            int previous_state = wakePin.read();
+            bool wokeFromInterrupt = false;
+            bool intervalSatisfied = false;
+
+            printf("***Interval or interrupt started\r\n");
+
+            while (!wokeFromInterrupt && !intervalSatisfied) {
+                if (sleepDuration > 1) {
+                    sleep_wake_rtc_or_interrupt(sleepDuration, false);
+                    printf("***Interval passed rtc or interrupt\r\n");
+                }
+
+                // Taking this out it spins polling the interrupt pin drawing almost 3mA more.
+                ThisThread::sleep_for(chrono::milliseconds(10));
+
+                if (elapsed_ms > cfg::sleep_seconds*1000)
+                    intervalSatisfied = true;
+
+                if (cfg::wake_pin_trigger == cfg::RISE) {
+                    if (wakePin.read() == 1 && previous_state == 0)
+                        wokeFromInterrupt = true;
+                    else if (previous_state == 1)
+                        previous_state = wakePin.read();
+                } else if (cfg::wake_pin_trigger == cfg::FALL) {
+                    if (wakePin.read() == 0 && previous_state == 1)
+                        wokeFromInterrupt = true;
+                    else if (previous_state == 0)
+                        previous_state = wakePin.read();
+                } else {
+                    if (wakePin.read() != previous_state)
+                        wokeFromInterrupt = true;
+                }
+                elapsed_ms = duration_cast<milliseconds>(timer.elapsed_time()).count();
+                if (sleepDuration > elapsed_ms/1000)
+                    sleepDuration = sleepDuration - elapsed_ms/1000;
+                else
+                    sleepDuration = 0;
+
+                if (wokeFromInterrupt)
+                    printf("woke from interrupt\r\n");
+                if (intervalSatisfied)
+                    printf("woke from interval\r\n");
+            }
+            printf("***Interval or interrupt ended\r\n");
+        }
+        else {
+            logError("Invalid wake mode %d", cfg::wake_mode);
+        }
+        timer.stop();
+    } else {
+        // If no FOTA, do as requested.
+        if(cfg::wake_mode == cfg::interval) 
+            sleep_wake_rtc_only(cfg::sleep_seconds, cfg::deep_sleep);
+        else if(cfg::wake_mode == cfg::interrupt)
+            sleep_wake_interrupt_only(cfg::deep_sleep);
+        else if(cfg::wake_mode == cfg::interval_or_interrupt)
+            sleep_wake_rtc_or_interrupt(cfg::sleep_seconds, cfg::deep_sleep);
+        else
+            logError("Invalid wake mode %d", cfg::wake_mode);
+    }
 }
 
 void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep) {
@@ -893,12 +1016,17 @@ void read_sensor(std::vector<uint8_t> &tx_data) {
 
 }
 
-// Puts entire device to sleep. No active threads.
+// Sleep device if FOTA is not in setup or launched else only thread sleep.
 void dot_wait_for_channel() {
     uint32_t next_tx_ms = dot->getNextTxMs();
     if (next_tx_ms) {
-        logInfo("Sleep until next available channel");
-        sleep_wake_rtc_only(next_tx_ms/1000+1, false);
+        if(Fota::getInstance()->timeToStart() < 0) {
+            logInfo("Sleep device until next available channel");
+            sleep_wake_rtc_only(next_tx_ms/1000+1, false);
+        } else {
+            logInfo("Thread sleep until next available channel");
+            ThisThread::sleep_for(chrono::milliseconds(next_tx_ms));
+        }
     }
 }
 
