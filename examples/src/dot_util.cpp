@@ -424,7 +424,7 @@ void dot_sleep() {
     timer.reset();
     timer.start();
 
-    // Don't sleep until idle. Wake is possible during this brief time.
+    // Don't sleep until idle. Wake event is possible during this brief time.
     while (!(Fota::getInstance()->idle()) || !(dot->getIsIdle())) {
         ThisThread::sleep_for(chrono::milliseconds(10));
         // monitor time - if wake on interval expires, return.
@@ -480,25 +480,24 @@ void dot_sleep() {
         // When FOTA is between setup and launch, don't allow deepsleep and max sleep time = time to launch.
         // Once FOTA has launched (is active in class C mode) don't sleep the MCU. Return once the requested sleep duration expired
         // or the interrupt line has been activated.
-        logInfo("Sleep limited due to FOTA");
+        if(FotaTimeToStart == 0)
+            logInfo("FOTA is active, device sleep not allowed. Thread will sleep until configured interval or interrupt, then return from sleep call.");
+        else
+            logInfo("FOTA is between setup and launch. Device sleep allowed up to %ds followed by possible thread sleep, then return from sleep call.", FotaTimeToStart);
 
         // The amount of time processor sleep is allowed.
         int32_t sleepDuration = (FotaTimeToStart < cfg::sleep_seconds) ? FotaTimeToStart : cfg::sleep_seconds;
         int32_t remainingDuration = (FotaTimeToStart < cfg::sleep_seconds) ? cfg::sleep_seconds - FotaTimeToStart : 0;
 
         if(cfg::wake_mode == cfg::interval) {
-            printf("***Interval started\r\n");
             // Best effort to sleep for the allowed sleep duration.
-            sleep_wake_rtc_only(sleepDuration, false);
-            printf("***Interval rtc complete\r\n");
+            if(sleepDuration > 0)
+                sleep_wake_rtc_only(sleepDuration, false);
             ThisThread::sleep_for(chrono::seconds(remainingDuration));
-            printf("***Interval ended\r\n");
         }
         else if(cfg::wake_mode == cfg::interrupt) {
             // If wake is from interval not interrupt, it should still "sleep" until interrupt.
-            logInfo("***Interrupt started\r\n");
             sleep_wake_rtc_or_interrupt(FotaTimeToStart, false);
-            logInfo("***Interval passed rtc or interrupt\r\n");
 
             while (!wokeFromInterrupt) {
                 // Draws almost 3mA more if left to spin with no thread sleep.
@@ -518,14 +517,11 @@ void dot_sleep() {
                         wokeFromInterrupt = true;
                 }
             }
-            logInfo("***Interrupt ended");
         }
         else if(cfg::wake_mode == cfg::interval_or_interrupt) {
             bool intervalSatisfied = false;
 
-            printf("***Interval or interrupt started\r\n");
             sleep_wake_rtc_or_interrupt(sleepDuration, false);
-            printf("***Interval passed rtc or interrupt\r\n");
 
             while (!wokeFromInterrupt && !intervalSatisfied) {
                 // Draws almost 3mA more if left to spin with no thread sleep.
@@ -549,16 +545,18 @@ void dot_sleep() {
                         wokeFromInterrupt = true;
                 }
             }
+#ifdef FOTA_SLEEP_TEST
             if (wokeFromInterrupt)
-                printf("woke from interrupt\r\n");
+                logInfo("woke from interrupt");
             if (intervalSatisfied)
-                printf("woke from interval\r\n");
-            printf("***Interval or interrupt ended\r\n");
+                logInfo("woke from interval");
+#endif
         }
         else {
             logError("Invalid wake mode %d", cfg::wake_mode);
         }
         timer.stop();
+        logInfo("Woke from FOTA limited sleep");
     }
 }
 
