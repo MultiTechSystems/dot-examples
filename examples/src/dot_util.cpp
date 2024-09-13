@@ -1051,25 +1051,60 @@ void thread_wait_for_channel() {
     ThisThread::sleep_for(chrono::milliseconds(dot->getNextTxMs()));
 }
 
-int send(uint8_t &size_sent) {
+int32_t send(RadioEvent* p_events, bool &sensor_data_sent) {
     int32_t ret;
     std::vector<uint8_t> tx_data;
+    sensor_data_sent = false;
+    enum payload_type {clock, sensor, empty};
+    payload_type sending;
+    uint8_t orig_port = dot->getAppPort();
 
-    read_sensor(tx_data);
+    logInfo("resync req = %s, NbTries = %d", p_events->get_clock_resync_req() ? "true" : "false", p_events->get_clock_correction_retries());
+
+    // If a response to a ForceDeviceResyncReq is needed, send it. This should be rare and typically only needed
+    // for ensuring time sync during multicast setup.
+    // Note: See LoRaWAN Application Layer Clock Synchronization Specification for details.
+    if (p_events->get_clock_resync_req() && (p_events->get_clock_correction_retries() > 0)) {
+        sending = clock;
+        tx_data.push_back(0x01);
+        #define GPS_RTC_OFFSET 315964800U
+        uint32_t gpsTime = time(NULL) + Fota::getInstance()->getClockOffset() - GPS_RTC_OFFSET;
+        tx_data.push_back((uint8_t)gpsTime);
+        tx_data.push_back((uint8_t)(gpsTime>>8));
+        tx_data.push_back((uint8_t)(gpsTime>>16));
+        tx_data.push_back((uint8_t)(gpsTime>>24));
+        tx_data.push_back(p_events->get_token_req() & 0x0f);
+    } else {
+        sending = sensor;
+        read_sensor(tx_data);
+    }
+
     // Make sure there is enough room for the payload. For US915 DR0, it is limited to 11 and MAC commands may consume
     // some of that space. Sending with no payload will send and clear the MAC commands freeing the payload space.
     if (dot->getNextTxMaxSize() < tx_data.size()) {
         logWarning("Not enough room for payload. Sending empty payload to clear MAC commands.");
+        sending = empty;
         tx_data.clear();
     }
-    size_sent = tx_data.size();
+
+    if (sending == clock) {
+        logInfo("Sending AppTimeReq");
+        dot->setAppPort(202);
+    }
 
     ret = dot->send(tx_data);
     if (ret != mDot::MDOT_OK) {
         logWarning("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
     } else {
         logInfo("successfully sent data to %s", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway");
+        if (sending == sensor)
+            sensor_data_sent = true;
+        if (sending == clock)
+            p_events->decrement_clock_correction_retries();
     }
+
+    if (sending == clock)
+        dot->setAppPort(orig_port);
 
     return ret;
 }

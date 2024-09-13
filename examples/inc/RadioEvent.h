@@ -24,7 +24,7 @@ public:
 
         // Downlink of payload can be processed here. Port 1 is the default. Other ports are valid to use.
         // Check latest LoRaWAN spec for available ports.
-        if (port==(dot->getAppPort())) {
+        if (port==1/*(dot->getAppPort())*/) {
             _data.clear();
             
             for (uint16_t i = 0; i < size; ++i) {
@@ -32,8 +32,42 @@ public:
             }
         }
 
-        if(port == 200 || port == 201 || port == 202) {
+        if (port == 200 || port == 201 || port == 202) {
             Fota::getInstance()->processCmd(payload, port, size);
+            if (port == 202) {
+                // Parse payload looking for ForceDeviceResyncReq command.
+                uint8_t clock_sync_command;
+                uint8_t i = 0;
+                while (i < size) {
+                    clock_sync_command = payload[i];
+                    switch (clock_sync_command) {
+                        case 0:     // PackageVersionReq
+                            i++;    // There is no payload for the PackageVersionReqdecrement_clock_correction_retries
+                            break;
+                        case 1:     // AppTimeAns
+                            logInfo("Received AppTimeAns");
+                            force_device_resync_req = false;
+                            // update the clock.
+                            token_req++;
+                            i+=6;    // Payload is 5 bytes
+                            break;
+                        case 2:     // DeviceAppTimePeriodicityReq
+                            i+=2;   // Payload is 1 byte
+                            break;
+                        case 3:     // ForceDeviceResyncReq
+                            // The clock sync spec says to discard the command silently if NbTrans=0
+                            force_device_resync_req_nbTrans = payload[i+1] & 0x07;
+                            logInfo("Received ForceDeviceResyncReq, NbTrans = %d", force_device_resync_req_nbTrans);
+                            if (force_device_resync_req_nbTrans == 0) {
+                                force_device_resync_req = false;
+                            } else {
+                                force_device_resync_req = true;
+                            }
+                            i+=2;   // Payload is 1 byte
+                            break;
+                    }
+                }
+            }
         }
 
         if (testModeEnabled) {
@@ -119,6 +153,32 @@ public:
 
         Fota::getInstance()->setClockOffset(seconds);
     }
+
+    void decrement_clock_correction_retries() {
+        if (force_device_resync_req_nbTrans > 0)
+            force_device_resync_req_nbTrans--;
+    }
+
+    uint8_t get_clock_correction_retries() {
+        return force_device_resync_req_nbTrans;
+    }
+
+    void clear_clock_resync_req() {
+        force_device_resync_req = false;
+    }
+
+    bool get_clock_resync_req() {
+        return force_device_resync_req;
+    }
+
+    uint8_t get_token_req() {
+        return token_req;
+    }
+
+private:
+    bool force_device_resync_req = true;
+    uint8_t force_device_resync_req_nbTrans = 1;
+    uint8_t token_req = 0;
 };
 
 #endif

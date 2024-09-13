@@ -8,6 +8,7 @@
 #include "MTSText.h"
 #include "ISL29011.h"
 #include "example_config.h"
+#include "RadioEvent.h"
 
 #if defined(TARGET_XDOT_L151CC)
 I2C i2c(I2C_SDA, I2C_SCL);
@@ -50,6 +51,6 @@ void dot_wait_for_channel();
 
 void thread_wait_for_channel();
 
-int send(uint8_t &size_sent);
+int32_t send(RadioEvent* p_events, bool &sensor_data_sent);
 
 #endif
