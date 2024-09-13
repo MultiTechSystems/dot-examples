@@ -11,12 +11,12 @@
 #include "RadioEvent.h"
 
 #if defined(TARGET_XDOT_L151CC)
-I2C i2c(I2C_SDA, I2C_SCL);
-ISL29011 lux(i2c);
+extern I2C i2c;
+extern ISL29011 lux;
 #elif defined(TARGET_XDOT_MAX32670)
 // no analog available
 #else
-AnalogIn lux(XBEE_AD0);
+extern AnalogIn lux;
 #endif
 
 extern mDot* dot;

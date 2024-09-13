@@ -7,6 +7,16 @@
 #include "LowPower.h"
 #endif
 
+
+#if defined(TARGET_XDOT_L151CC)
+I2C i2c(I2C_SDA, I2C_SCL);
+ISL29011 lux(i2c);
+#elif defined(TARGET_XDOT_MAX32670)
+// no analog available
+#else
+AnalogIn lux(XBEE_AD0);
+#endif
+
 void sleep_wake_rtc_only(uint32_t sleep_s, bool deepsleep);
 void sleep_wake_interrupt_only(bool deepsleep);
 void sleep_wake_rtc_or_interrupt(uint32_t sleep_s, bool deepsleep);
@@ -135,7 +145,9 @@ void display_config() {
     if (dot->getAdr()) {
     logInfo("--- ADRAckLimit ---------- %d", dot->getAdrAckLimit());
     logInfo("--- ADRAckDelay ---------- %d", dot->getAdrAckDelay());
+#if defined(TARGET_XDOT_MAX32670)
     logInfo("--- ADR auto increment --- %s", dot->getDisableIncrementDR() == 0 ? "disabled" : "enabled");
+#endif
     }
     logInfo("TX datarate -------------- %s", mDot::DataRateStr(dot->getTxDataRate()).c_str());
     logInfo("TX power ----------------- %lu dBm", dot->getTxPower());
