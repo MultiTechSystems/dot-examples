@@ -6,6 +6,8 @@
 #include "Fota.h"
 #include "example_config.h"
 
+extern mDot* dot;
+
 class RadioEvent : public mDotEvent
 {
 
@@ -24,7 +26,7 @@ public:
 
         // Downlink of payload can be processed here. Port 1 is the default. Other ports are valid to use.
         // Check latest LoRaWAN spec for available ports.
-        if (port==1/*(dot->getAppPort())*/) {
+        if (port==(dot->getAppPort())) {
             _data.clear();
             
             for (uint16_t i = 0; i < size; ++i) {
@@ -41,23 +43,45 @@ public:
                 while (i < size) {
                     clock_sync_command = payload[i];
                     switch (clock_sync_command) {
-                        case 0:     // PackageVersionReq
+                        case 0: {   // PackageVersionReq
                             i++;    // There is no payload for the PackageVersionReqdecrement_clock_correction_retries
                             break;
-                        case 1:     // AppTimeAns
-                            logInfo("Received AppTimeAns");
+                        }
+                        case 1: {   // AppTimeAns
+                            //logInfo("Received AppTimeAns");
                             force_device_resync_req = false;
-                            // update the clock.
+                            int32_t time_correction =
+                                    payload[i+4] << 24 |
+                                    payload[i+3] << 16 |
+                                    payload[i+2] << 8 |
+                                    payload[i+1];
+                            // Adjust the time if the token matches.
+                            if ((payload[i+5] & 0x0f) == token_req) {
+                                // get the time
+                                // 315964800U - GPS offset - Unix time epoch (01 Jan 1970) vs GPS time epoch (06 Jan 1980)
+                                uint32_t gpsTime = Fota::getInstance()->getClockOffset() + time(NULL) - 315964800U;
+                                if (time_correction > 0){
+                                    // add the correction
+                                    gpsTime += time_correction;
+                                } else {
+                                    // subtract the correction
+                                    gpsTime += -time_correction;
+                                }
+                                // save the time
+                                Fota::getInstance()->setClockOffset(gpsTime);
+                            }
                             token_req++;
                             i+=6;    // Payload is 5 bytes
                             break;
-                        case 2:     // DeviceAppTimePeriodicityReq
+                        }
+                        case 2: {    // DeviceAppTimePeriodicityReq
                             i+=2;   // Payload is 1 byte
                             break;
-                        case 3:     // ForceDeviceResyncReq
+                        }
+                        case 3: {    // ForceDeviceResyncReq
                             // The clock sync spec says to discard the command silently if NbTrans=0
                             force_device_resync_req_nbTrans = payload[i+1] & 0x07;
-                            logInfo("Received ForceDeviceResyncReq, NbTrans = %d", force_device_resync_req_nbTrans);
+                            //logInfo("Received ForceDeviceResyncReq, NbTrans = %d", force_device_resync_req_nbTrans);
                             if (force_device_resync_req_nbTrans == 0) {
                                 force_device_resync_req = false;
                             } else {
@@ -65,6 +89,7 @@ public:
                             }
                             i+=2;   // Payload is 1 byte
                             break;
+                        }
                     }
                 }
             }
@@ -176,8 +201,8 @@ public:
     }
 
 private:
-    bool force_device_resync_req = true;
-    uint8_t force_device_resync_req_nbTrans = 1;
+    bool force_device_resync_req = false;
+    uint8_t force_device_resync_req_nbTrans = 0;
     uint8_t token_req = 0;
 };
 

@@ -207,7 +207,7 @@ int main() {
         // If the channel plan has duty cycle restrictions, wait may be required.
         dot_wait_for_channel();
 
-        if(send(&events, sensor_data_sent) == mDot::MDOT_OK) {
+        if (send(&events, sensor_data_sent) == mDot::MDOT_OK) {
             // In class A mode, downlinks only occur following an uplink. So process downlinks after a successful send.
             if (events.PacketReceived && (events.RxPort == (dot->getAppPort()))) {
                 std::vector<uint8_t> rx_data;
@@ -217,15 +217,17 @@ int main() {
             }
 
             // Print information updated on send/rcv.
-            if(dot->getDataPending())
+            if (dot->getDataPending())
                 logInfo("Data pending");
-            if(dot->hasMacCommands())
+            if (dot->hasMacCommands())
                 logInfo("Respond with MAC answers");
-            if(dot->getAckRequested())
+            if (dot->getAckRequested())
                 logInfo("Ack has been requested");
-            if(sensor_data_sent == false)
+            if (sensor_data_sent == false)
                 logInfo("Sent an empty payload to clear MAC commands or an AppTimeReq");
-            if(consecutive_sends <= 1)
+            if (events.get_clock_resync_req() && (events.get_clock_correction_retries() > 0))
+                logInfo("Device clock resync requested");
+            if (consecutive_sends <= 1)
                 logInfo("Reached consecutive send limit of %d without sleeping", max_consecutive_sends);
             
             // Optional reasons to send again right away.
@@ -236,7 +238,8 @@ int main() {
             // 4. Sent an empty payload to clear MAC commands. dot->hasMacCommands is not true now but that's because an 
             //    empty packet was sent making room for the actual payload to be sent.
             if (dot->getClass() == "A" && consecutive_sends > 1 &&
-                (dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || sensor_data_sent == false)) {
+                (dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || sensor_data_sent == false) ||
+                (events.get_clock_resync_req() && (events.get_clock_correction_retries() > 0))) {
                 logInfo("Don't sleep... send again.");
                 consecutive_sends--;
             } else {
