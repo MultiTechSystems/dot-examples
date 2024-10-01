@@ -223,7 +223,7 @@ int main() {
                 logInfo("Respond with MAC answers");
             if (dot->getAckRequested())
                 logInfo("Ack has been requested");
-            if (sensor_data_sent == false)
+            if (!sensor_data_sent)
                 logInfo("Sent an empty payload to clear MAC commands or an AppTimeReq");
             if (events.get_clock_resync_req() && (events.get_clock_correction_retries() > 0))
                 logInfo("Device clock resync requested");
@@ -238,7 +238,7 @@ int main() {
             // 4. Sent an empty payload to clear MAC commands. dot->hasMacCommands is not true now but that's because an 
             //    empty packet was sent making room for the actual payload to be sent.
             if (dot->getClass() == "A" && consecutive_sends > 1 &&
-                (dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || sensor_data_sent == false) ||
+                (dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || !sensor_data_sent) ||
                 (events.get_clock_resync_req() && (events.get_clock_correction_retries() > 0))) {
                 logInfo("Don't sleep... send again.");
                 consecutive_sends--;

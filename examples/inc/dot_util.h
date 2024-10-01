@@ -51,6 +51,10 @@ void dot_wait_for_channel();
 
 void thread_wait_for_channel();
 
+#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
 int32_t send(RadioEvent* p_events, bool &sensor_data_sent);
+#else
+int32_t send(bool &sensor_data_sent);
+#endif
 
 #endif

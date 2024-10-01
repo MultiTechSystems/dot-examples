@@ -124,15 +124,15 @@ int main() {
     display_config();
 
     while (true) {
-        static uint8_t payload_size_sent;
+        static bool sensor_data_sent;
 
         // join network if not joined
         if (!dot->getNetworkJoinStatus()) {
             join_network();
         }
 
-        send(payload_size_sent);
-        // Since downlinks can come at anytime, handle them in RadioEvents.h.
+        send(sensor_data_sent);
+        // Downlinks can come at anytime, PacketRx event in RadioEvent.h executes on downlink.
 
         // The Dot can't sleep in PEER_TO_PEER mode. It must be waiting for data from the other Dot.
         // Send data every 5 seconds

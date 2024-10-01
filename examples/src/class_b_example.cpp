@@ -105,7 +105,7 @@ int main() {
 
     while (true) {
         static bool send_uplink = true;
-        static uint8_t payload_size_sent;
+        static bool sensor_data_sent;
 
         // Check if we locked the beacon yet and send an uplink to notify the network server
         // To receive data from the gateway in class B ping slots, we must have received a beacon
@@ -124,7 +124,7 @@ int main() {
                 ThisThread::sleep_for(10ms);
             }
 
-            if (send(payload_size_sent) != mDot::MDOT_OK) {
+            if (send(sensor_data_sent) != mDot::MDOT_OK) {
                 logError("Failed to inform the network server we are in class B");
                 logInfo("Reset the MCU to try again");
                 return 0;

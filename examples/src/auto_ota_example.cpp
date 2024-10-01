@@ -91,7 +91,7 @@ int main() {
         // Defensive programming in case the gateway/network server continuously gives a reason to send.
         static const uint8_t max_consecutive_sends = 4;
         static uint8_t consecutive_sends = max_consecutive_sends;
-        static uint8_t payload_size_sent;
+        static bool sensor_data_sent;
 
         // Join network if join status indicates not joined. If link check threshold is not enabled, another method
         // should be used to ensure connectivity and trigger joins. This could be based on not seeing a downlink for 
@@ -103,7 +103,7 @@ int main() {
         // If the channel plan has duty cycle restrictions, wait may be required.
         dot_wait_for_channel();
 
-        if(send(payload_size_sent) == mDot::MDOT_OK) {
+        if(send(sensor_data_sent) == mDot::MDOT_OK) {
             // In class A mode, downlinks only occur following an uplink. So process downlinks after a successful send.
             if (events.PacketReceived && (events.RxPort == (dot->getAppPort()))) {
                 std::vector<uint8_t> rx_data;
@@ -119,7 +119,7 @@ int main() {
                 logInfo("Respond with MAC answers");
             if(dot->getAckRequested())
                 logInfo("Ack has been requested");
-            if(payload_size_sent == 0)
+            if(!sensor_data_sent)
                 logInfo("Sent an empty payload to clear MAC commands");
             if(consecutive_sends <= 1)
                 logInfo("Reached consecutive send limit of %d without sleeping", max_consecutive_sends);
@@ -131,7 +131,7 @@ int main() {
             // 3. An Ack has been requested of this endpoint.
             // 4. Sent an empty payload to clear MAC commands. dot->hasMacCommands is not true now but that's because an 
             //    empty packet was sent making room for the actual payload to be sent.
-            if ((dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || (payload_size_sent == 0)) && consecutive_sends > 1) {
+            if ((dot->getDataPending() || dot->hasMacCommands() || dot->getAckRequested() || !sensor_data_sent) && consecutive_sends > 1) {
                 logInfo("Don't sleep... send again.");
                 consecutive_sends--;
             } else {

@@ -1058,11 +1058,12 @@ void dot_wait_for_channel() {
     }
 }
 
-// Allows other threads to run including downlink processing in RadioEvents.
+// Allows other threads to run including downlink processing in RadioEvent.h.
 void thread_wait_for_channel() {
     ThisThread::sleep_for(chrono::milliseconds(dot->getNextTxMs()));
 }
 
+#if ACTIVE_EXAMPLE == FOTA_EXAMPLE
 int32_t send(RadioEvent* p_events, bool &sensor_data_sent) {
     int32_t ret;
     std::vector<uint8_t> tx_data;
@@ -1119,4 +1120,31 @@ int32_t send(RadioEvent* p_events, bool &sensor_data_sent) {
         dot->setAppPort(orig_port);
 
     return ret;
+
+#else // ACTIVE_EXAMPLE != FOTA_EXAMPLE
+int32_t send(bool &sensor_data_sent) {
+    int32_t ret;
+    std::vector<uint8_t> tx_data;
+    sensor_data_sent = true;
+
+    read_sensor(tx_data);
+
+    // Make sure there is enough room for the payload. For US915 DR0, it is limited to 11 and MAC commands may consume
+    // some of that space. Sending with no payload will send and clear the MAC commands freeing the payload space.
+    if (dot->getNextTxMaxSize() < tx_data.size()) {
+        logWarning("Not enough room for payload. Sending empty payload to clear MAC commands.");
+        tx_data.clear();
+        sensor_data_sent = false;
+    }
+
+    ret = dot->send(tx_data);
+    if (ret != mDot::MDOT_OK) {
+        logWarning("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
+        sensor_data_sent = false;
+    } else {
+        logInfo("successfully sent data to %s", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway");
+    }
+
+    return ret;
+#endif // ACTIVE_EXAMPLE == FOTA_EXAMPLE
 }
